@@ -5,75 +5,40 @@ Supported formats:
 - sample_columns: first column is row label, columns 2..n are samples (e.g., SNP_Genotypes.csv).
 - marker_metrics: leading metadata columns, then sample columns start where header begins with a digit
   (e.g., Report_DSp25-515_* files).
+
+Genotype loading is delegated to ``load_dart.py`` (ADR-0002/0003/0004).
 """
 from __future__ import annotations
 
 import argparse
 import json
-import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import warnings
+
 import numpy as np
 import pandas as pd
-from sklearn.decomposition import PCA
-from sklearn.impute import SimpleImputer
-from sklearn.neighbors import NearestNeighbors
 
+# Suppress noisy UMAP / sklearn warnings
+warnings.filterwarnings("ignore", message=".*n_jobs.*overridden.*")
+warnings.filterwarnings("ignore", message=".*Graph is not fully connected.*")
 
-def guess_separator(path: Path) -> str:
-    line = path.open(encoding="utf-8-sig").readline()
-    return ";" if line.count(";") > line.count(",") else ","
-
-
-def detect_format(header: List[str]) -> str:
-    if header and header[0] == "Sample_code":
-        return "sample_columns"
-    if "AlleleID" in header:
-        return "marker_metrics"
-    return "sample_columns"
-
-
-def load_sample_columns(
-    path: Path, sep: str, nrows: int | None
-) -> Tuple[pd.DataFrame, List[str], Dict[str, Dict[str, str]]]:
-    df = pd.read_csv(path, sep=sep, low_memory=False, nrows=nrows)
-    sample_ids = [str(c) for c in df.columns[1:]]
-    first_col = df.columns[0]
-    labels = df[first_col].astype(str)
-    marker_mask = labels.str.match(r"^\\d") | labels.str.contains("|", regex=False)
-    meta_rows = df.loc[~marker_mask]
-    marker_rows = df.loc[marker_mask]
-
-    sample_meta: Dict[str, Dict[str, str]] = {sid: {} for sid in sample_ids}
-    for _, row in meta_rows.iterrows():
-        key = str(row.iloc[0])
-        for sid, val in zip(sample_ids, row.iloc[1:]):
-            if pd.notna(val) and str(val).strip():
-                sample_meta[sid][key] = str(val)
-
-    geno = marker_rows.set_index(first_col)
-    geno = geno.replace({"-": np.nan, "": np.nan})
-    geno = geno.apply(pd.to_numeric, errors="coerce")
-    X = geno.T  # samples x markers
-    return X, sample_ids, sample_meta
-
-
-def load_marker_metrics(
-    path: Path, sep: str, nrows: int | None
-) -> Tuple[pd.DataFrame, List[str], Dict[str, Dict[str, str]]]:
-    df = pd.read_csv(path, sep=sep, low_memory=False, nrows=nrows)
-    header = [str(c) for c in df.columns]
-    sample_start = next(i for i, name in enumerate(header) if name[0].isdigit())
-    sample_cols = header[sample_start:]
-    marker_id_col = header[0]
-    geno = df[sample_cols]
-    geno = geno.replace({"-": np.nan, "": np.nan})
-    geno = geno.apply(pd.to_numeric, errors="coerce")
-    geno.index = df[marker_id_col].astype(str)
-    X = geno.T  # samples x markers
-    sample_meta: Dict[str, Dict[str, str]] = {str(s): {} for s in sample_cols}
-    return X, sample_cols, sample_meta
+# --- centralised loader (ADR-0002 / 0003 / 0004) ---
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from load_dart import (  # noqa: E402
+    check_duplicate_guard,
+    filter_missingness,
+    load_genotypes,
+)
+from gpu_utils import (  # noqa: E402
+    detect_device,
+    print_device_info,
+    smart_impute,
+    smart_knn,
+    smart_pca,
+)
 
 
 def subsample_matrix(
@@ -90,15 +55,13 @@ def subsample_matrix(
     return X, sample_ids, sample_meta
 
 
-def build_embedding(X: np.ndarray, seed: int) -> Tuple[np.ndarray, np.ndarray]:
+def build_embedding(X: np.ndarray, seed: int, device: str = "cpu") -> Tuple[np.ndarray, np.ndarray]:
     max_components = min(50, X.shape[1], X.shape[0])
     if max_components < 2:
-        # Degenerate case: only one feature or sample; pad with zeros.
         emb = np.column_stack([X[:, 0], np.zeros_like(X[:, 0])])
         return emb, emb
 
-    pca = PCA(n_components=max_components, random_state=seed)
-    X_pca = pca.fit_transform(X)
+    X_pca, _ = smart_pca(X, max_components, seed, device)
     try:
         import umap  # type: ignore
 
@@ -114,17 +77,8 @@ def build_graph_features(pca_features: np.ndarray) -> np.ndarray:
     return pca_features[:, :keep]
 
 
-def knn_edges(features: np.ndarray, sample_ids: List[str], neighbors: int, metric: str) -> List[Dict[str, object]]:
-    k = min(neighbors, len(sample_ids) - 1)
-    if k < 1:
-        return []
-    nn = NearestNeighbors(n_neighbors=k + 1, metric=metric)
-    nn.fit(features)
-    distances, indices = nn.kneighbors(features)
-    edges: List[Dict[str, object]] = []
-    for i, (row_idx, row_dist) in enumerate(zip(indices, distances)):
-        for j, dist in zip(row_idx[1:], row_dist[1:]):  # skip self
-            edges.append({"source": sample_ids[i], "target": sample_ids[j], "distance": float(dist)})
+def knn_edges(features: np.ndarray, sample_ids: List[str], neighbors: int, metric: str, device: str = "cpu") -> List[Dict[str, object]]:
+    edges, _ = smart_knn(features, sample_ids, neighbors, metric, device)
     return edges
 
 
@@ -144,39 +98,66 @@ def main() -> None:
     )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out-prefix", required=True, help="Output prefix (e.g., data/outputs/global_snp)")
+    parser.add_argument("--sample-thresh", type=float, default=0.50,
+                        help="Drop samples with missingness above this fraction (ADR-0003)")
+    parser.add_argument("--marker-thresh", type=float, default=0.50,
+                        help="Drop markers with missingness above this fraction (ADR-0003)")
+    parser.add_argument("--imputation", default="most_frequent",
+                        choices=["most_frequent", "median", "mean"],
+                        help="Imputation strategy after filtering")
+    parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"],
+                        help="Compute device (auto detects CUDA)")
     args = parser.parse_args()
 
     path = Path(args.input)
     out_prefix = Path(args.out_prefix)
     out_prefix.parent.mkdir(parents=True, exist_ok=True)
 
-    sep = guess_separator(path)
-    header_line = path.open(encoding="utf-8-sig").readline().strip()
-    header = re.split(sep, header_line)
-    fmt = detect_format(header) if args.format == "auto" else args.format
+    device = detect_device(args.device)
+    print_device_info(device)
 
+    # ADR-0002: warn on duplicate
+    if check_duplicate_guard(path):
+        print(f"[WARN] {path.name} is the known Wild/LowDensity SNP duplicate (ADR-0002).")
+        print("       Consider using the LowDensity copy instead.")
+
+    # --- Load via centralised loader (ADR-0004: BOM, sentinel, NaN) ---
     limit_rows = args.limit_rows
     if limit_rows is None and args.max_markers:
         limit_rows = args.max_markers + 10
     if limit_rows == 0:
         limit_rows = None
 
-    if fmt == "sample_columns":
-        X_df, sample_ids, sample_meta = load_sample_columns(path, sep, limit_rows)
-    else:
-        X_df, sample_ids, sample_meta = load_marker_metrics(path, sep, limit_rows)
+    X_df, sample_ids, sample_meta = load_genotypes(
+        path, max_rows=limit_rows, fmt=args.format if args.format != "auto" else "auto",
+    )
 
     X_df, sample_ids, sample_meta = subsample_matrix(
         X_df, sample_ids, sample_meta, args.max_samples, args.max_markers, args.seed
     )
-    missing_rate = float(pd.isna(X_df).sum().sum() / (X_df.shape[0] * X_df.shape[1]))
 
-    imputer = SimpleImputer(strategy="most_frequent")
-    X_imputed = imputer.fit_transform(X_df)
+    # --- ADR-0003: filter missingness before imputation ---
+    missing_rate_raw = float(X_df.isna().sum().sum() / max(X_df.shape[0] * X_df.shape[1], 1))
+    X_df, filter_report = filter_missingness(
+        X_df,
+        sample_thresh=args.sample_thresh,
+        marker_thresh=args.marker_thresh,
+    )
+    # Update sample_ids after potential sample drops
+    sample_ids = list(X_df.index.astype(str))
+    sample_meta = {sid: sample_meta.get(sid, {}) for sid in sample_ids}
+    missing_rate = float(X_df.isna().sum().sum() / max(X_df.shape[0] * X_df.shape[1], 1))
 
-    embedding, pca_features = build_embedding(X_imputed, args.seed)
+    if filter_report["samples_dropped"] or filter_report["markers_dropped"]:
+        print(f"[filter] Dropped {filter_report['samples_dropped']} samples, "
+              f"{filter_report['markers_dropped']} markers (ADR-0003)")
+        print(f"[filter] Shape: {filter_report['shape_before']} → {filter_report['shape_after']}")
+
+    X_imputed = smart_impute(X_df, strategy=args.imputation, device=device)
+
+    embedding, pca_features = build_embedding(X_imputed, args.seed, device=device)
     graph_features = build_graph_features(pca_features)
-    edges = knn_edges(graph_features, sample_ids, args.neighbors, args.metric)
+    edges = knn_edges(graph_features, sample_ids, args.neighbors, args.metric, device=device)
 
     nodes = []
     for idx, sid in enumerate(sample_ids):
@@ -191,15 +172,18 @@ def main() -> None:
         )
 
     stats = {
-        "format": fmt,
+        "format": args.format,
         "samples": len(sample_ids),
         "markers": int(X_df.shape[1]),
-        "missing_rate": missing_rate,
+        "missing_rate_raw": missing_rate_raw,
+        "missing_rate_after_filter": missing_rate,
         "metric": args.metric,
         "neighbors": args.neighbors,
         "input": str(path),
-        "separator": sep,
         "limit_rows": limit_rows,
+        "imputation": args.imputation,
+        "filter": filter_report,
+        "seed": args.seed,
     }
 
     with (out_prefix.parent / f"{out_prefix.name}_nodes.json").open("w", encoding="utf-8") as f:
