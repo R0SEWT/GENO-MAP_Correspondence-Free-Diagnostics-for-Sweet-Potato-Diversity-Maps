@@ -35,3 +35,4 @@ Cada ADR sigue esta estructura:
 | 0003 | [Missingness Estructurada (MNAR)](0003-missingness-estructurada-mnar.md) | Aceptada |
 | 0004 | [Valores Centinela Genómicos](0004-sentinels-genomicos.md) | Aceptada |
 | 0005 | [Validación Visual Baseline](0005-validacion-visual-baseline.md) | Aceptada |
+| 0006 | [Comparación AE Level 1 vs Baseline](0006-comparacion-ae-vs-baseline.md) | Aceptada |
