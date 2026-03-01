@@ -1,8 +1,6 @@
 Acutalmente 
-La idea es usar unas horas una **NVIDIA L40S** (48GB VRAM) en lighntning AI. (se debera exportar a ese entorno, pero el desarrollo inicial lo haré localmente con GPU)
-Voy a proponerte cosas con **alto impacto científico + factibilidad real en 20h**, no fantasías de foundation model genómico imposible de converger.
+La idea es usar unas horas una **NVIDIA L40S** (48GB VRAM) en lighntning AI. (se debera exportar a ese entorno, pero el desarrollo inicial lo haré localmente con GPU 4060TI)
 
----
 
 # 🧠 Nivel 1 — GENO-MAP → GENO-REP (Representation Learning Real)
 

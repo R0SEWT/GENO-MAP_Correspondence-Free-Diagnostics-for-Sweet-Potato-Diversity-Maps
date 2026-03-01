@@ -40,4 +40,11 @@ Pipeline ligero para construir embeddings 2D y grafos kNN a partir de matrices D
 - Estrategia: prototipo con `--max-markers` reducido en GPU pequeña; en la A100 correr con `--limit-rows 0` y más vecinos. Ajusta `--metric` según tipo de marcador.
 
 ## Notebooks
+- `notebooks/data_catalog.ipynb`: catálogo de datos reproducible → genera `data/DATA_CATALOG.md`
 - `notebooks/revision_datasets.ipynb`: exploración y chequeo de los CSV descargados.
+
+## Documentación
+- `docs/agents.md` — contexto del proyecto para agentes IA (Copilot, Claude, etc.)
+- `docs/addr/` — Architecture Decision Records (ADRs)
+- `docs/memoria/` — trabajo de pre-curaduría (paper GENO-MAP)
+- `docs/roadmap/` — ideas y planes futuros (escalado GPU, transformers, etc.)
