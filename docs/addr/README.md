@@ -36,3 +36,4 @@ Cada ADR sigue esta estructura:
 | 0004 | [Valores Centinela Genómicos](0004-sentinels-genomicos.md) | Aceptada |
 | 0005 | [Validación Visual Baseline](0005-validacion-visual-baseline.md) | Aceptada |
 | 0006 | [Comparación AE Level 1 vs Baseline](0006-comparacion-ae-vs-baseline.md) | Aceptada |
+| 0007 | [Cierre Level 1 — Autoencoder Genómico](0007-cierre-level1-autoencoder.md) | Aceptada |
