@@ -140,12 +140,15 @@ def train_autoencoder(
     noise_frac: float = 0.15,
     sparsity_lambda: float = 1e-4,
     lr: float = 1e-3,
+    weight_decay: float = 1e-5,
     batch_size: int = 256,
     epochs: int = 200,
     patience: int = 20,
     val_frac: float = 0.1,
     seed: int = 42,
     device: str = "auto",
+    pretrained_path: Path | None = None,
+    freeze_encoder_epochs: int = 0,
 ) -> Dict[str, Any]:
     """Train and return model + history + embeddings.
 
@@ -180,7 +183,24 @@ def train_autoencoder(
         dropout=dropout,
     ).to(device)
 
-    optimiser = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
+    # Transfer learning: load pre-trained weights
+    if pretrained_path is not None:
+        ckpt = torch.load(pretrained_path, map_location=device, weights_only=True)
+        state = ckpt["model_state_dict"] if "model_state_dict" in ckpt else ckpt
+        # Handle dimension mismatch (different input_dim between datasets)
+        mismatched = []
+        model_sd = model.state_dict()
+        for k, v in list(state.items()):
+            if k in model_sd and v.shape != model_sd[k].shape:
+                mismatched.append(k)
+                del state[k]
+        model.load_state_dict(state, strict=False)
+        if mismatched:
+            print(f"  [transfer] Skipped {len(mismatched)} mismatched layers: {mismatched[:4]}...")
+        else:
+            print(f"  [transfer] Loaded all weights from {pretrained_path.name}")
+
+    optimiser = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimiser, mode="min", factor=0.5, patience=max(5, patience // 3),
     )
@@ -193,6 +213,16 @@ def train_autoencoder(
 
     t0 = time.time()
     for epoch in range(1, epochs + 1):
+        # --- Freeze/unfreeze encoder for transfer learning ---
+        if freeze_encoder_epochs > 0:
+            freeze = epoch <= freeze_encoder_epochs
+            for p in model.encoder.parameters():
+                p.requires_grad = not freeze
+            if epoch == freeze_encoder_epochs + 1:
+                print(f"  [transfer] Unfreezing encoder at epoch {epoch}")
+                # Reset optimiser to include encoder params
+                optimiser = torch.optim.AdamW(model.parameters(), lr=lr * 0.1, weight_decay=weight_decay)
+
         # --- Train ---
         model.train()
         epoch_loss = 0.0
@@ -354,11 +384,16 @@ def main() -> None:
                         help="Fraction of inputs masked for denoising")
     parser.add_argument("--sparsity-lambda", type=float, default=1e-4)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--weight-decay", type=float, default=1e-5)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--epochs", type=int, default=200)
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda"])
+    parser.add_argument("--pretrained", type=Path, default=None,
+                        help="Path to pre-trained checkpoint for transfer learning")
+    parser.add_argument("--freeze-encoder-epochs", type=int, default=0,
+                        help="Freeze encoder for N epochs during fine-tuning")
     parser.add_argument("--sample-thresh", type=float, default=0.50)
     parser.add_argument("--marker-thresh", type=float, default=0.50)
     parser.add_argument("--imputation", default="most_frequent",
@@ -408,11 +443,14 @@ def main() -> None:
         noise_frac=args.noise_frac,
         sparsity_lambda=args.sparsity_lambda,
         lr=args.lr,
+        weight_decay=args.weight_decay,
         batch_size=args.batch_size,
         epochs=args.epochs,
         patience=args.patience,
         seed=args.seed,
         device=args.device,
+        pretrained_path=args.pretrained,
+        freeze_encoder_epochs=args.freeze_encoder_epochs,
     )
 
     print(f"\n[ae] Training complete: best_epoch={result['best_epoch']}, "
