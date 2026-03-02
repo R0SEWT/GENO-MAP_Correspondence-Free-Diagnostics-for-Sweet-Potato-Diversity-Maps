@@ -37,3 +37,4 @@ Cada ADR sigue esta estructura:
 | 0005 | [Validación Visual Baseline](0005-validacion-visual-baseline.md) | Aceptada |
 | 0006 | [Comparación AE Level 1 vs Baseline](0006-comparacion-ae-vs-baseline.md) | Aceptada |
 | 0007 | [Cierre Level 1 — Autoencoder Genómico](0007-cierre-level1-autoencoder.md) | Aceptada |
+| 0008 | [Level A — Frontera de Estabilidad Representacional](0008-level-a-frontera-estabilidad.md) | Aceptada |

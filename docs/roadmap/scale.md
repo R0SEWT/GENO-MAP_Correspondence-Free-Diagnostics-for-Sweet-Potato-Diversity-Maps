@@ -1,235 +1,165 @@
-Acutalmente 
-La idea es usar unas horas una **NVIDIA L40S** (48GB VRAM) en lighntning AI. (se debera exportar a ese entorno, pero el desarrollo inicial lo haré localmente con GPU 4060TI)
+## 1) Qué NO puedes afirmar / hacer (y por qué)
+
+Con 0 IDs en común, no puedes:
+
+* comparar embeddings “punto a punto”
+* medir Jaccard de vecinos entre paneles para los mismos nodos
+* decir “este cluster en LowDensity corresponde a este cluster en Global”
+
+Eso sería *hallucinated alignment*.
+
+---
+
+## 2) Qué SÍ puedes hacer: “comparación sin correspondencia” (invariantes)
+
+La idea es: aunque no haya matching, sí puedes comparar **propiedades del espacio**, no de individuos.
+
+### A. Invariantes espectrales / geométricos (muy fuertes)
+
+En PCA-space (y también en distancias):
+
+* **effective rank / participation ratio**
+* **espectro de autovalores** (cómo cae la varianza)
+* **PC1 dominance** (ya lo viste en lowdensity_silico)
+* **curva de distancias kNN** (densidad local)
+* **conectividad del grafo**: #componentes, giant component ratio
+* **distribución de grados** (aunque kNN es casi regular, hay efectos por ties/reciprocidad)
+* **reciprocal kNN rate** (proporción de aristas mutuas)
+
+Estas métricas responden:
+
+> “¿El dataset/panel induce una geometría rica o degenerada?”
+
+Y eso es curaduría + QA real.
+
+### B. Robustez bajo intervenciones (tu mejor arma)
+
+Sin IDs compartidos, tu validación “comparativa” debe ser:
+
+* subsampling de marcadores (5/10/20/50%)
+* inyección controlada de missing (+5/+10/+20%)
+* variación de imputación (modo/mediana/AE-imputer)
+* variación de k (15/20/30)
+* seeds UMAP (solo visual)
+
+Comparas **curvas**, no instancias.
+
+Ejemplo de claim defendible:
+
+> “LowDensity panels are more sensitive to missingness and marker subsampling than Global panels, as measured by topology drift and effective rank.”
+
+Eso es ciencia útil y honesta.
+
+### C. “Overlap biológico plausible” pasa a ser *hipótesis*, no análisis
+
+Lo dices tal cual lo pusiste:
+
+* plausible
+* no verificable sin manifest
+* deliverable estándar pendiente
+
+Y listo.
+
+---
+
+## 3) Roadmap orientado correctamente (con namespaces disjuntos)
+
+### Módulo 1 — Panel QA & Geometry Diagnostics (obligatorio)
+
+**Objetivo:** caracterizar y detectar degeneraciones por panel.
+
+**Outputs (paper/poster)**
+
+* tabla por dataset: effective rank, PC1/PC2 ratio, kNN distance stats, component ratio
+* flags automáticos: “1D-dominant”, “collapsed neighborhood”, “high missingness sensitivity”
+
+Esto convierte tu proyecto en **herramienta de control de calidad**.
+
+---
+
+### Módulo 2 — Robustness Curves (tu “comparación entre paneles” real)
+
+**Objetivo:** medir sensibilidad estructural a decisiones razonables.
+
+**Experimentos**
+
+* markers subsampling: 5/10/20/50/80%
+* missing injection: +0/+5/+10/+20% (MCAR)
+* imputación: mode vs median vs learned-imputer (si lo metes)
+
+**Métricas**
+
+* Jaccard vecinos/aristas (intra-dataset)
+* drift de distribución de distancias kNN
+* estabilidad del subespacio PCA (principal angles)
+
+**Outputs**
+
+* 2–3 figuras tipo “curvas” por dataset/panel
+
+Esto reemplaza “alignment por ID” de manera sólida.
+
+---
+
+### Módulo 3 — Decision Support (core-set selection) por panel
+
+**Objetivo:** producir subsets representativos *dentro de cada panel*.
+
+Aunque no puedas cruzar Global↔LowDensity, sí puedes entregar:
+
+* “core set” para Global
+* “core set” para LowDensity
+* “diversity coverage vs k”
+
+Eso es aplicable de inmediato en CIP, sin mapping.
+
+---
+
+### Módulo 4 — Manifest acquisition as an explicit deliverable (future work con valor)
+
+Esto debe aparecer como:
+
+* **Limitación estructural**: IDs disjuntos
+* **Acción concreta**: obtener manifest DArT (plate+well → CIP accession)
+* **Resultado esperado**: permitir cross-panel matching, batch correction, transfer alignment
 
 
-# 🧠 Nivel 1 — GENO-MAP → GENO-REP (Representation Learning Real)
+---
 
-## 1️⃣ Autoencoder Genómico Estructural
+## 4) Cómo lo vendes sin que parezca “nos faltó data”
 
-En vez de PCA → UMAP, entrenas:
+Clave: no lo vendas como carencia, sino como **diseño robusto ante falta de correspondencia**.
 
-[
-f_\theta: \mathbb{R}^{p} \rightarrow \mathbb{R}^{d}
+> *Because genotyping panels use disjoint identifier namespaces (CIP accession IDs vs DArT plate/well codes) and no manifest was available, we focus on correspondence-free validation: geometry diagnostics and robustness curves under controlled perturbations.*
+
 ]
 
-donde:
+## 5) Bonus: si quieres una “aproximación de alignment” sin manifest (con advertencia)
 
-* ( p \sim 50k ) marcadores
-* ( d \in [32,128] )
+Solo si necesitas un *hint* exploratorio (no claim), podrías hacer:
 
-Arquitectura viable en 20h:
+* comparar distribuciones de metadatos (si LowDensity tiene alguno)
+* buscar coincidencias por atributos no-ID (origen, institución, país, etc.)
 
-* Input layer 50k
-* Bottleneck 64–128
-* Residual MLP profundo
-* Dropout estructural
-* Masked denoising objective
-
-Loss:
-[
-\mathcal{L} = |X - \hat{X}|_2^2 + \lambda \cdot sparsity
-]
-
-Luego:
-
-* Construyes kNN sobre el embedding aprendido
-* Comparas estabilidad vs PCA
-* Mides trustworthiness vs reconstruction error
-
-🔥 Impacto:
-
-* Ya no es reducción lineal.
-* Estás aprendiendo estructura no lineal real.
+Pero dado que LowDensity parece no tener mapeo a CIP accession, **no vale la pena**; mejor mantenerlo limpio.
 
 ---
 
-# 🧬 Nivel 2 — Masked Genotype Modeling (tipo BERT pero para SNP)
+## 6) Idas de implementacion evaluar viabilidad
 
-Más interesante.
+1. Implementar `panel_diagnostics.py`:
 
-Idea:
+   * effective rank
+   * PC1 dominance
+   * kNN distance stats
+   * reciprocal kNN rate
+   * component ratio
 
-* Random mask 15% de loci
-* Predices genotipo faltante
-* Aprendes representación contextual
+2. Implementar `robustness_curves.py`:
 
-Esto modela dependencia entre loci (LD implícito).
+   * marker subsampling + missing injection
 
-Arquitectura factible en 20h:
+3. Escribir en el short paper:
 
-* Transformer pequeño (6–8 layers)
-* Embedding dimension 128–256
-* Input: genotype tokens (0,1,2, missing)
+   * “No manifest, no alignment; we do correspondence-free validation.”
 
-Objetivo:
-[
-\mathcal{L}_{MLM} = \text{CrossEntropy}(g_i, \hat{g}_i)
-]
-
-Esto es insano comparado con imputación por moda.
-
-Resultado:
-
-* Embedding por accesión (CLS token)
-* Latente biológicamente informado
-
-
----
-
-# 🌍 Nivel 3 — Contrastive Learning con Metadatos
-
-Si tienes aunque sea Institution, región, o grupo taxonómico:
-
-[
-\mathcal{L}_{InfoNCE}
-]
-
-Positivos:
-
-* Misma institución / mismo cluster preliminar
-
-Negativos:
-
-* Accesiones lejanas en PCA-space
-
-Aprendes embedding que:
-
-* Maximiza cohesión intra-grupo
-* Maximiza separación inter-grupo
-
-Luego evalúas:
-
-* Silhouette
-* ARI
-* Homogeneidad
-
-Eso convierte GENO-MAP en representación semántica.
-
----
-
-# 🧩 Nivel 4 — Graph Neural Network sobre kNN
-
-Ya tienes el grafo.
-
-Ahora entrena:
-
-* GCN / GraphSAGE
-* Sobre nodos con features genómicas
-
-Objetivo:
-
-* Link prediction
-* Node embedding refinement
-* Community-aware embedding
-
-20h es suficiente si el grafo es 6k nodos.
-
-Eso convierte tu grafo en estructura aprendida, no estática.
-
----
-
-# 🧪 Nivel 5 — Imputación Aprendida
-
-Entrena modelo para predecir missing genotypes mejor que moda/mediana.
-
-Comparas:
-
-* BEAGLE (baseline clásico)
-* Autoencoder
-* Transformer MLM
-
-Métricas:
-
-* Accuracy imputación
-* Cambio en topología del grafo
-* Efecto en diversidad estructural
-
-Eso es científicamente fuerte.
-
----
-
-# 🔬 Nivel 6 — Diversidad como problema de optimización
-
-Formulas:
-
-Seleccionar subconjunto ( S \subseteq V ) maximizando:
-
-[
-\text{coverage}(S) = \sum_{v \in V} \max_{u \in S} d(u,v)
-]
-
-Eso es k-center problem.
-
-Entrenas modelo que:
-
-* Aprenda heurística de selección
-* O uses RL ligero
-
-Eso sí impacta decisiones de cruza.
-
----
-
-# ⚡ Qué NO hacer en 20h
-
-* Foundation model genómico enorme
-* Transformer 100M+ params
-* Fine-tuning tipo DNABERT gigante
-* Multi-cultivo cross-domain training serio
-
-Eso no converge bien en ese tiempo.
-
----
-
-# 🧠 Mi recomendación estratégica
-
-Si quieres algo realmente fuerte y publicable:
-
-### 👉 Masked Genotype Transformer + Evaluación Topológica
-
-Porque:
-
-* Modela dependencia entre loci.
-* Reemplaza imputación simplista.
-* Produce embedding biológicamente informado.
-* Se conecta naturalmente con OOD detection.
-* Escala a multi-cultivo después.
-
-Y conecta perfecto con tu perfil:
-representation learning + robustness + real-world constraints.
-
----
-
-# 🔥 Si quieres algo “insano pero inteligente”
-
-Haz esto:
-
-1. Entrena masked genotype model.
-2. Extrae embedding CLS por accesión.
-3. Construye grafo en ese embedding.
-4. Compara contra PCA-grafo:
-
-   * Trustworthiness
-   * Jaccard stability
-   * Modularidad
-   * Separación por metadatos
-5. Evalúa bajo submuestreo de marcadores (robustez).
-
-Si el embedding aprendido:
-
-* Es más estable
-* Es menos sensible a imputación
-* Revela mejor subestructura
-
-Acabas de transformar GENO-MAP en GENO-REP.
-
----
-
-Si quieres, en el siguiente mensaje te diseño:
-
-* Arquitectura concreta
-* Batch size estimado para L40S
-* Tokens/sec aproximados
-* Plan de 20h optimizado
-* Métricas de validación
-
-Y lo dejamos a nivel paper serio.
