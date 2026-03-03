@@ -166,7 +166,18 @@ THRESH = {
 
 
 def fig3_geometry(out: Path):
-    """Dot-plot: 3 geometry metrics × 4 panels + QA threshold lines."""
+    """Dot-plot: 3 geometry metrics × 4 panels + QA threshold lines.
+
+    Poster improvements:
+    - Distinct marker shapes per panel (consistent with fig4)
+    - Larger markers with numeric value annotations
+    - "Safe" zone shading (green) vs "alert" zone (red tint)
+    - Horizontal connecting lines for visual grouping
+    - Panel labels on every subplot for standalone readability
+    """
+    MARKERS = ["o", "s", "D", "^"]  # same as fig4
+    MS = 10  # larger for poster distance
+
     metrics = ["PC1 variance (%)", "Effective rank", "kNN reciprocity"]
     data = np.array([DIAG[d] for d in DATASET_ORDER])
 
@@ -176,27 +187,51 @@ def fig3_geometry(out: Path):
 
     for j, (ax, m) in enumerate(zip(axes, metrics)):
         y = np.arange(4)
+        t = THRESH[m]
+
+        # Safe / alert zone shading
+        if t["side"] == "right":
+            # Values BELOW threshold are safe (PC1 < 50%)
+            ax.axvspan(ax.get_xlim()[0] if j == 0 else 0, t["val"],
+                       color="#009E73", alpha=0.06, zorder=0)
+            ax.axvspan(t["val"], 100,
+                       color="#D55E00", alpha=0.06, zorder=0)
+        else:
+            # Values ABOVE threshold are safe (eff_rank > 5, recip > 0.40)
+            ax.axvspan(t["val"], 100 if j == 1 else 1.0,
+                       color="#009E73", alpha=0.06, zorder=0)
+            ax.axvspan(0, t["val"],
+                       color="#D55E00", alpha=0.06, zorder=0)
+
+        # Horizontal connecting lines (subtle)
         for i in range(4):
-            ax.plot(data[i, j], y[i], "o", color=colors[i],
-                    markersize=8, zorder=3,
-                    markeredgecolor="white", markeredgewidth=0.5)
+            ax.hlines(y[i], 0, data[i, j], color=colors[i],
+                      alpha=0.2, lw=1.5, zorder=1)
+
+        # Markers
+        for i in range(4):
+            ax.plot(data[i, j], y[i], marker=MARKERS[i], color=colors[i],
+                    markersize=MS, zorder=3,
+                    markeredgecolor="white", markeredgewidth=0.7)
+            # Value annotation
+            fmt = f"{data[i,j]:.1f}" if j < 2 else f"{data[i,j]:.3f}"
+            ax.text(data[i, j], y[i] - 0.30, fmt,
+                    fontsize=6, ha="center", va="bottom", color="#333",
+                    fontweight="bold")
+
         ax.set_yticks(y)
         ax.set_yticklabels(DS_SHORT if j == 0 else [])
         ax.set_xlabel(m)
         ax.invert_yaxis()
-        ax.grid(axis="x", lw=0.3, alpha=0.5)
+        ax.grid(axis="x", lw=0.3, alpha=0.4)
         ax.set_axisbelow(True)
         _lbl(ax, chr(65 + j))
 
         # QA threshold reference line
-        t = THRESH[m]
-        ax.axvline(t["val"], ls="--", lw=0.9, color="#CC3333", alpha=0.7,
-                   zorder=1)
-        # Place label near top of plot
-        txt_x = t["val"]
+        ax.axvline(t["val"], ls="--", lw=1.0, color="#CC3333", alpha=0.7,
+                   zorder=2)
         txt_ha = "right" if t["side"] == "right" else "left"
-        nudge = -0.02 if t["side"] == "right" else 0.02
-        ax.text(txt_x, -0.6, f"  {t['label']}  ", fontsize=6.5,
+        ax.text(t["val"], -0.6, f"  {t['label']}  ", fontsize=6.5,
                 color="#CC3333", ha=txt_ha, va="center", style="italic")
 
     fig.tight_layout(w_pad=1.2)
@@ -207,26 +242,56 @@ def fig3_geometry(out: Path):
 
 
 def fig4_robustness(out: Path):
-    """HERO: marker subsampling + missing injection + SS inset."""
+    """HERO: marker subsampling + missing injection + SS inset.
+
+    Improvements for poster readability:
+    - Distinct marker shapes per panel (visible from 1–2 m)
+    - Semantic background zones (safe / caution / degraded)
+    - Key threshold annotations
+    - Heavier lines and larger markers
+    """
+    MARKERS = ["o", "s", "D", "^"]  # per panel
+    MS = 6  # marker size for main curves
+
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(DOUBLE_COL_MM * MM, 90 * MM), sharey=True)
 
+    # ── Semantic zones (both panels) ──
+    for ax in (ax1, ax2):
+        ax.axhspan(0.80, 1.02, color="#009E73", alpha=0.06, zorder=0)   # safe
+        ax.axhspan(0.60, 0.80, color="#E69F00", alpha=0.06, zorder=0)   # caution
+        ax.axhspan(0.00, 0.60, color="#D55E00", alpha=0.06, zorder=0)   # degraded
+        ax.axhline(0.80, ls=":", lw=0.5, color="#999", zorder=0)
+        ax.axhline(0.60, ls=":", lw=0.5, color="#999", zorder=0)
+
     # (A) Marker subsampling
-    for ds in DATASET_ORDER:
-        ax1.plot([f * 100 for f in MK_F], MK_J[ds],
-                 "o-", color=C[ds], label=DS_LABEL[ds])
+    fracs = [f * 100 for f in MK_F]
+    for i, ds in enumerate(DATASET_ORDER):
+        ax1.plot(fracs, MK_J[ds],
+                 marker=MARKERS[i], color=C[ds], label=DS_LABEL[ds],
+                 ms=MS, lw=1.8, markeredgecolor="white", markeredgewidth=0.5)
     ax1.set_xlabel("Markers retained (%)")
-    ax1.set_ylabel("Jaccard neighbor overlap ($J_{nbr}$)")
+    ax1.set_ylabel("Jaccard neighbor overlap ($J_{\\mathrm{nbr}}$)")
     ax1.set_ylim(0.35, 1.02)
     ax1.set_xlim(0, 85)
     ax1.xaxis.set_major_locator(mticker.MultipleLocator(20))
+    ax1.grid(axis="y", lw=0.3, alpha=0.4)
     _lbl(ax1, "A")
+
+    # Zone labels (right edge of panel A)
+    ax1.text(83, 0.91, "safe", fontsize=6, color="#009E73",
+             ha="right", va="center", fontstyle="italic", alpha=0.7)
+    ax1.text(83, 0.70, "caution", fontsize=6, color="#E69F00",
+             ha="right", va="center", fontstyle="italic", alpha=0.7)
+    ax1.text(83, 0.48, "degraded", fontsize=6, color="#D55E00",
+             ha="right", va="center", fontstyle="italic", alpha=0.7)
 
     # SS inset (repositioned to avoid data overlap)
     ins = ax1.inset_axes([0.55, 0.12, 0.42, 0.30])
-    for ds in DATASET_ORDER:
+    for i, ds in enumerate(DATASET_ORDER):
         ins.plot([f * 100 for f in MK_F], MK_SS[ds],
-                 "s-", color=C[ds], markersize=3, lw=1.0)
+                 marker=MARKERS[i], color=C[ds], markersize=3, lw=1.0,
+                 markeredgecolor="white", markeredgewidth=0.3)
     ins.set_ylabel("SS", fontsize=7, labelpad=2)
     ins.set_xlabel("Markers (%)", fontsize=7, labelpad=2)
     ins.set_ylim(0.90, 1.005)
@@ -235,14 +300,21 @@ def fig4_robustness(out: Path):
     ins.set_title("PCA subspace sim.", fontsize=7, pad=2)
     for sp in ["top", "right"]:
         ins.spines[sp].set_visible(False)
+    # Annotation: "≥ 0.91 even at 5%"
+    ins.annotate("≥ 0.91 at 5%", xy=(5, 0.917), xytext=(30, 0.925),
+                 fontsize=5.5, color="#555", ha="center",
+                 arrowprops=dict(arrowstyle="->", color="#999", lw=0.5))
 
     # (B) Missing injection
-    for ds in DATASET_ORDER:
-        ax2.plot([r * 100 for r in MS_R], MS_J[ds],
-                 "o-", color=C[ds], label=DS_LABEL[ds])
+    rates = [r * 100 for r in MS_R]
+    for i, ds in enumerate(DATASET_ORDER):
+        ax2.plot(rates, MS_J[ds],
+                 marker=MARKERS[i], color=C[ds], label=DS_LABEL[ds],
+                 ms=MS, lw=1.8, markeredgecolor="white", markeredgewidth=0.5)
     ax2.set_xlabel("Additional MCAR missing (%)")
     ax2.set_xlim(-1, 22)
     ax2.xaxis.set_major_locator(mticker.MultipleLocator(5))
+    ax2.grid(axis="y", lw=0.3, alpha=0.4)
     _lbl(ax2, "B")
 
     # Shared legend
@@ -258,26 +330,40 @@ def fig4_robustness(out: Path):
 
 
 def fig6_pca_vs_ae(out: Path):
-    """Grouped bars: trust + stability, PCA vs AE."""
+    """Grouped bars: trust + stability, PCA vs AE, per-panel colours."""
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(DOUBLE_COL_MM * MM, 80 * MM))
 
     x = np.arange(4)
     w = 0.35
+    panel_colors = [C[d] for d in DATASET_ORDER]
+    # Lighter tint for AE bars (alpha blend with white)
+    def _light(hex_c, t=0.45):
+        r, g, b = int(hex_c[1:3], 16), int(hex_c[3:5], 16), int(hex_c[5:7], 16)
+        r2 = int(r + (255 - r) * t)
+        g2 = int(g + (255 - g) * t)
+        b2 = int(b + (255 - b) * t)
+        return f"#{r2:02x}{g2:02x}{b2:02x}"
+    ae_colors = [_light(c) for c in panel_colors]
 
     # (A) Trustworthiness
     pt = [TRUST[d][0] for d in DATASET_ORDER]
     at = [TRUST[d][1] for d in DATASET_ORDER]
-    ax1.bar(x - w / 2, pt, w, color=C["pca"], label="PCA-30D",
-            edgecolor="white", linewidth=0.4)
-    ax1.bar(x + w / 2, at, w, color=C["ae"], label="AE-64D",
-            edgecolor="white", linewidth=0.4)
+    pca_bars_a = ax1.bar(x - w / 2, pt, w, color=panel_colors,
+                         edgecolor="white", linewidth=0.4, label="PCA-30D")
+    ae_bars_a = ax1.bar(x + w / 2, at, w, color=ae_colors,
+                        edgecolor=[c for c in panel_colors], linewidth=0.8,
+                        hatch="//", label="AE-64D")
     ax1.set_ylabel("Trustworthiness ($k$=15)")
     ax1.set_xticks(x)
     ax1.set_xticklabels(DS_SHORT, rotation=30, ha="right")
-    ax1.set_ylim(0.78, 1.00)
+    ax1.set_ylim(0.78, 1.02)
     ax1.yaxis.set_major_locator(mticker.MultipleLocator(0.05))
-    ax1.legend(loc="lower left", fontsize=8)
+    # Custom legend: solid = PCA, hatched = AE
+    from matplotlib.patches import Patch
+    ax1.legend(handles=[Patch(facecolor="#888", edgecolor="white", label="PCA-30D"),
+                        Patch(facecolor="#ccc", edgecolor="#888", hatch="//", label="AE-64D")],
+               loc="lower left", fontsize=8)
     _lbl(ax1, "A")
 
     # Bar-top numeric values
@@ -286,21 +372,23 @@ def fig6_pca_vs_ae(out: Path):
                  ha="center", va="bottom", fontsize=5.5, color="#333")
         ax1.text(x[i] + w / 2, at[i] + 0.004, f"{at[i]:.3f}",
                  ha="center", va="bottom", fontsize=5.5, color="#333")
-    ax1.set_ylim(0.78, 1.02)  # extra headroom for labels
 
     # (B) Stability
     ps = [STAB[d][0] for d in DATASET_ORDER]
     ae_s = [STAB[d][1] for d in DATASET_ORDER]
-    ax2.bar(x - w / 2, ps, w, color=C["pca"], label="PCA-30D",
-            edgecolor="white", linewidth=0.4)
-    ax2.bar(x + w / 2, ae_s, w, color=C["ae"], label="AE-64D",
-            edgecolor="white", linewidth=0.4)
+    ax2.bar(x - w / 2, ps, w, color=panel_colors,
+            edgecolor="white", linewidth=0.4, label="PCA-30D")
+    ax2.bar(x + w / 2, ae_s, w, color=ae_colors,
+            edgecolor=[c for c in panel_colors], linewidth=0.8,
+            hatch="//", label="AE-64D")
     ax2.set_ylabel("Edge Jaccard (inter-seed stability)")
     ax2.set_xticks(x)
     ax2.set_xticklabels(DS_SHORT, rotation=30, ha="right")
     ax2.set_ylim(0.0, 1.05)
     ax2.yaxis.set_major_locator(mticker.MultipleLocator(0.2))
-    ax2.legend(loc="upper right", fontsize=8)
+    ax2.legend(handles=[Patch(facecolor="#888", edgecolor="white", label="PCA-30D"),
+                        Patch(facecolor="#ccc", edgecolor="#888", hatch="//", label="AE-64D")],
+               loc="upper right", fontsize=8)
     _lbl(ax2, "B")
 
     # Bar-top numeric values (panel B)
