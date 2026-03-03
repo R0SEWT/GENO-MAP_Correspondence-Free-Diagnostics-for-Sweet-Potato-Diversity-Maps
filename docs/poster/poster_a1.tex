@@ -192,35 +192,60 @@ and robustness curves.
 % ═══════════════════════════════════════════════════════════
 \begin{block}{3. Robustness Under Perturbation}
 \begin{columns}[T,totalwidth=\textwidth]
+
 \begin{column}{0.62\textwidth}
 \centering
 \includegraphics[width=\linewidth]{fig4_robustness_hero.pdf}
 \end{column}
+
 \begin{column}{0.36\textwidth}
 \justifying
-\textbf{(A) Marker subsampling} (5--80\% retention):
-kNN neighborhood overlap (\(J_{\text{nbr}}\)) degrades
-smoothly from 0.90 to 0.43 as markers are removed.
-The PCA subspace similarity remains \(\geq 0.91\)
-even at 5\% retention, confirming that the principal
-geometry is genome-wide, not marker-specific.
+
+\textbf{Global geometry is invariant.}
+Under marker subsampling (5--80\%) and
++0--20\% MCAR injection, the PCA subspace
+similarity remains \(\mathrm{SS} \geq 0.91\)
+(even at 5\% marker retention) and
+\(\mathrm{SS} > 0.998\) under missing injection.
+Principal variance structure is genome-wide,
+not marker-specific.
 
 \vspace{1mm}
-\textbf{(B) MCAR injection} (+0--20\%):
-\(J_{\text{nbr}}\) drops to 0.77--0.86 at +20\%
-additional missing values. The PCA subspace is
-practically invariant (SS\,\(>\)\,0.998).
+
+\textbf{Local topology degrades smoothly.}
+kNN neighborhood overlap
+(\(J_{\text{nbr}}\)) decreases monotonically
+from 0.90 to 0.43 under subsampling and
+to 0.77--0.86 at +20\% MCAR.
 
 \vspace{1mm}
-Degradation is \textbf{smooth and monotonic}
-across all four panels --- \textbf{no cliff effects},
-enabling data-quality thresholds for germplasm
-curation workflows.
+
+\textbf{No phase transitions.}
+Degradation is continuous across all panels,
+enabling curator-defined quality thresholds
+without structural collapse.
+
+\vspace{2mm}
+\begin{tcolorbox}[colback=white,colframe=blue!40!black,
+title=\bfseries Stability Regime]
+
+Let $X \in \mathbb{R}^{n\times p}$ with $n \ll p$.
+For random marker subsets $X_s$ with $|s| \geq 0.05p$,
+
+\[
+\mathcal{S}_{30}(X) \approx \mathcal{S}_{30}(X_s)
+\quad \text{(SS ≥ 0.91)}
+\]
+
+Global PCA geometry is stable under extreme
+feature dropout, while local neighborhoods
+degrade continuously without collapse.
+
+\end{tcolorbox}
+
 \end{column}
 \end{columns}
 \end{block}
-
-\vspace{1mm}
 
 % ═══════════════════════════════════════════════════════════
 % ROW 3 — GEOMETRY + PCA vs AE
@@ -262,18 +287,28 @@ Edge-Jaccard stability: PCA \textbf{0.88–0.91}; AE \textbf{0.16–0.52}.
 % ═══════════════════════════════════════════════════════════
 \begin{columns}[T,totalwidth=\textwidth]
 
+    
 \begin{column}{0.30\textwidth}
-\begin{tcolorbox}[takeaway, title={\bfseries Key Takeaways}]
-\begin{enumerate}\setlength\itemsep{0.5mm}
-    \item \textbf{PCA geometry is robust:} SS\,\(\geq\)\,0.91 under 95\% marker dropout.
-    \item \textbf{Monotonic kNN degradation:} no cliff effects; enables
-          curator-side quality thresholds.
-    \item \textbf{Correspondence-free QA:} geometry diagnostics + robustness curves
-          work without shared identifiers.
-    \item \textbf{AE not justified in \(n \ll p\):} marginal trust gains vs.\
-          2–5\(\times\) worse topological stability.
+\vspace{5mm}
+
+{\fontsize{28}{32}\selectfont\bfseries\color{accent}Synthesis}\par
+\vspace{1mm}
+\hrule height 0.6pt
+\vspace{2mm}
+
+\begin{enumerate}\setlength\itemsep{1mm}
+\item \textbf{Subspace invariance:}
+PCA-30D geometry remains stable (SS ≥ 0.91) under 95\% marker dropout.
+
+\item \textbf{Topological continuity:}
+kNN neighborhoods degrade monotonically without phase transitions.
+
+\item \textbf{Correspondence-free QA:}
+Geometry diagnostics + robustness curves provide intra-panel validation without shared identifiers.
+
+\item \textbf{Representation constraint:}
+In $n \ll p$ regimes, stability dominates marginal trust gains; PCA remains operationally preferable.
 \end{enumerate}
-\end{tcolorbox}
 \end{column}
 
 \hspace{0.02\textwidth} % ← espacio SOLO aquí
@@ -314,10 +349,19 @@ downstream community structure.
     \bottomrule
 \end{tabular}}
 
-\vspace{1mm}
+
+\vspace{24mm}
 \justifying
-Stability, not trust, is the \textbf{binding operational
-constraint}.
+{\normalsize
+\textbf{Robust geometry enables reliable exploration.}
+}
+
+\vspace{4mm}
+\centering
+\safeincludegraphics[height=46mm]{logos/qr_repo.png}\\[1mm]
+{\small\color{darktext!70} Code and reproducible artifacts}
+
+
 \end{block}
 \end{column}
 
