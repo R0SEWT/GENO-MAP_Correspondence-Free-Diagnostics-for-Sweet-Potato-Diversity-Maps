@@ -357,8 +357,8 @@ def fig6_pca_vs_ae(out: Path):
     ax1.set_ylabel("Trustworthiness ($k$=15)")
     ax1.set_xticks(x)
     ax1.set_xticklabels(DS_SHORT, rotation=30, ha="right")
-    ax1.set_ylim(0.78, 1.02)
-    ax1.yaxis.set_major_locator(mticker.MultipleLocator(0.05))
+    ax1.set_ylim(0, 1.05)
+    ax1.yaxis.set_major_locator(mticker.MultipleLocator(0.2))
     # Custom legend: solid = PCA, hatched = AE
     from matplotlib.patches import Patch
     ax1.legend(handles=[Patch(facecolor="#888", edgecolor="white", label="PCA-30D"),
@@ -459,11 +459,12 @@ def fig10_frontier(out: Path):
 def fig_stability_regime(out: Path):
     """Stability frontier vs n/p — single-panel conceptual figure.
 
-    x-axis: n/p  (generalises beyond sweet potato)
-    y-axis: Inter-seed kNN Edge Jaccard (full pipeline)
-    Two curves: PCA (flat, high) vs AE (growing, lower)
-    Vertical marker at n*/p ≈ 0.20 (trust crossover)
-    Annotation: stability gap persists at max n.
+    Poster improvements (consistent with fig3/fig4/fig6):
+    - Distinct marker shapes (o=PCA, s=AE) with larger size
+    - Semantic zones: stable (green) / unstable (red)
+    - Heavier lines, white marker edges
+    - Shaded region between curves showing the persistent gap
+    - Trust crossover marker with cleaner annotation
     """
     p = 20_069  # Global SNP marker count
     n = np.array(FR_N, dtype=float)
@@ -472,22 +473,39 @@ def fig_stability_regime(out: Path):
     fig, ax = plt.subplots(figsize=(SINGLE_COL_MM * 1.1 * MM,
                                     SINGLE_COL_MM * 0.85 * MM))
 
-    # PCA: nearly flat high line
-    ax.plot(np_ratio, FR_PS, "o-", color=C["pca"], label="PCA-30D",
-            ms=4, lw=1.6, zorder=3)
-    # AE: growing but always below
-    ax.plot(np_ratio, FR_AS, "s-", color=C["ae"], label="AE-64D",
-            ms=4, lw=1.6, zorder=3)
+    # ── Semantic zones ──
+    ax.axhspan(0.80, 1.10, color="#009E73", alpha=0.06, zorder=0)   # stable
+    ax.axhspan(0.00, 0.80, color="#D55E00", alpha=0.06, zorder=0)   # unstable
+    ax.axhline(0.80, ls=":", lw=0.5, color="#999", zorder=0)
+    ax.text(0.005, 0.83, "stable", fontsize=6, color="#009E73",
+            fontstyle="italic", alpha=0.7, va="bottom")
+    ax.text(0.005, 0.77, "unstable", fontsize=6, color="#D55E00",
+            fontstyle="italic", alpha=0.7, va="top")
 
-    # Trust crossover vertical line at n*/p ≈ 0.20
+    # ── Shaded gap between PCA and AE ──
+    ax.fill_between(np_ratio, FR_AS, FR_PS,
+                    color="#D55E00", alpha=0.08, zorder=1,
+                    label="Stability gap")
+
+    # ── PCA: nearly flat high line ──
+    ax.plot(np_ratio, FR_PS, "o-", color=C["pca"], label="PCA-30D",
+            ms=5, lw=1.8, zorder=3,
+            markeredgecolor="white", markeredgewidth=0.5)
+    # ── AE: growing but always below ──
+    ax.plot(np_ratio, FR_AS, "s-", color=C["ae"], label="AE-64D",
+            ms=5, lw=1.8, zorder=3,
+            markeredgecolor="white", markeredgewidth=0.5)
+
+    # ── Trust crossover vertical line at n*/p ≈ 0.20 ──
     n_star_ratio = 4100 / p  # ≈ 0.204
     ax.axvline(n_star_ratio, ls="--", lw=1.0, color="#888", alpha=0.7,
-               zorder=1)
-    ax.text(n_star_ratio + 0.008, 0.15,
-            f"$n^*/p \\approx {n_star_ratio:.2f}$\n(trust crossover)",
-            fontsize=7, color="#555", va="bottom", ha="left")
+               zorder=2)
+    ax.annotate(f"$n^*/p \\approx {n_star_ratio:.2f}$\ntrust crossover",
+                xy=(n_star_ratio, 0.30), xytext=(n_star_ratio + 0.04, 0.22),
+                fontsize=7, color="#555", ha="left", va="center",
+                arrowprops=dict(arrowstyle="->", color="#999", lw=0.7))
 
-    # Stability gap annotation at max n/p
+    # ── Stability gap annotation at max n/p ──
     max_np = np_ratio[-1]
     gap = FR_PS[-1] - FR_AS[-1]
     mid_y = (FR_PS[-1] + FR_AS[-1]) / 2
@@ -499,12 +517,13 @@ def fig_stability_regime(out: Path):
             ha="right", va="center", fontweight="bold")
 
     ax.set_xlabel("$n / p$")
-    ax.set_ylabel("Inter-seed kNN Edge Jaccard\n(full pipeline)")
+    ax.set_ylabel("Inter-seed kNN Edge Jaccard")
     ax.set_ylim(0.05, 1.08)
     ax.set_xlim(-0.01, 0.32)
-    ax.legend(loc="center right", fontsize=8)
+    ax.legend(loc="center right", fontsize=7, framealpha=0.9)
     ax.xaxis.set_major_locator(mticker.MultipleLocator(0.05))
     ax.yaxis.set_major_locator(mticker.MultipleLocator(0.2))
+    ax.grid(axis="y", lw=0.3, alpha=0.4)
 
     fig.tight_layout()
     fig.savefig(out / "fig_stability_regime.png")

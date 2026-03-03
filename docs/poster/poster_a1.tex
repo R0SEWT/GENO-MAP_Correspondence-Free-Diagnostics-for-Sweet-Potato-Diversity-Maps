@@ -24,6 +24,7 @@
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tikz}
+\usetikzlibrary{positioning}
 \usepackage{xcolor}
 \usepackage{ragged2e}
 \usepackage[most]{tcolorbox}
@@ -59,9 +60,14 @@
         left=8mm, right=8mm, top=2mm, bottom=2mm,
     },
     takeaway/.style={
-        enhanced, colback=okteal!6, colframe=okteal!50,
-        boxrule=1pt, arc=3mm,
+        enhanced, colback=softgrey, colframe=darktext!40,
+        boxrule=0.8pt, arc=2mm,
         left=6mm, right=6mm, top=2mm, bottom=2mm,
+        fonttitle=\bfseries\color{darktext},
+        coltitle=darktext,
+        colbacktitle=darktext!12,
+        attach boxed title to top left={yshift=-2mm, xshift=4mm},
+        boxed title style={boxrule=0pt, arc=1.5mm},
     },
 }
 
@@ -115,7 +121,7 @@ for Sweet Potato Diversity Maps}
   \safeincludegraphics[height=22mm]{logos/percep3-logo-preview.jpg}
 \end{minipage}
 
-\vspace{2mm}
+\vspace{5mm}
 \begin{center}
 \begin{tcolorbox}[oneliner, width=0.92\textwidth]
 \centering\itshape
@@ -159,19 +165,27 @@ and robustness curves.
 \begin{column}{0.495\textwidth}
 \begin{block}{2. Method (fixed graph protocol)}
 \justifying
-\begin{itemize}\setlength\itemsep{1.5mm}
-    \item \textbf{PCA-30D} as deterministic analytic space (graph built here)
-    \item \textbf{kNN graph}: \(k\!=\!15\), cosine distance on PCA scores
-    \item \textbf{UMAP-2D} for visualization only (stochastic)
-    \item \textbf{Validation}: geometry diagnostics + robustness perturbations
-          (marker dropout 5--80\%, MCAR +0--20\%)
+\begin{itemize}\setlength\itemsep{2mm}
+    \item[\textcolor{okblue}{\(\boldsymbol{1}\)}]
+          \textbf{PCA-30D} — deterministic analytic space;
+          retains \(>\)\,85\% variance across all panels.
+    \item[\textcolor{okblue}{\(\boldsymbol{2}\)}]
+          \textbf{kNN graph} — \(k\!=\!15\), cosine distance
+          on PCA scores; reciprocity \(>\)\,0.64 (all panels).
+    \item[\textcolor{okblue}{\(\boldsymbol{3}\)}]
+          \textbf{UMAP-2D} — stochastic layout for
+          visualisation only (not used in metrics).
+    \item[\textcolor{okblue}{\(\boldsymbol{4}\)}]
+          \textbf{Validation} — geometry diagnostics
+          + robustness perturbations (marker dropout
+          5–80\%, MCAR injection +0–20\%).
 \end{itemize}
 \end{block}
 \end{column}
 
 \end{columns}
 
-\vspace{1mm}
+\vspace{5mm}
 
 % ═══════════════════════════════════════════════════════════
 % ROW 2 — ROBUSTNESS HERO  (full width)
@@ -214,7 +228,7 @@ curation workflows.
 \begin{columns}[T,totalwidth=\textwidth]
 
 \begin{column}{0.495\textwidth}
-\begin{block}{4. Panel Geometry \& QA}
+\begin{block}{\strut 4. Panel Geometry \& QA}
 \centering
 \includegraphics[width=\linewidth]{fig3_panel_geometry.pdf}
 
@@ -227,7 +241,7 @@ All panels show \textbf{no 1D collapse} and \textbf{strong reciprocity}.
 \end{column}
 
 \begin{column}{0.495\textwidth}
-\begin{block}{5. PCA vs.\ Autoencoder}
+\begin{block}{\strut 5. PCA vs.\ Autoencoder}
 \centering
 \includegraphics[width=\linewidth]{fig6_pca_vs_ae.pdf}
 
@@ -241,7 +255,7 @@ Edge-Jaccard stability: PCA \textbf{0.88–0.91}; AE \textbf{0.16–0.52}.
 
 \end{columns}
 
-\vspace{1mm}
+\vspace{5mm}
 
 % ═══════════════════════════════════════════════════════════
 % ROW 4 — TAKEAWAYS + STABILITY + FAILURE MODE
@@ -262,8 +276,10 @@ Edge-Jaccard stability: PCA \textbf{0.88–0.91}; AE \textbf{0.16–0.52}.
 \end{tcolorbox}
 \end{column}
 
-\begin{column}{0.34\textwidth}
-\begin{block}{6. Stability Regime}
+\hspace{0.02\textwidth} % ← espacio SOLO aquí
+
+\begin{column}{0.33\textwidth}
+\begin{block}{\strut 6. Stability Regime}
 \centering
 \includegraphics[width=\linewidth]{fig_stability_regime.pdf}
 
@@ -277,7 +293,7 @@ when \(n/p < 0.3\).
 \end{column}
 
 \begin{column}{0.30\textwidth}
-\begin{block}{7. Failure Mode}
+\begin{block}{\strut 7. Failure Mode}
 \justifying
 \footnotesize
 In ultra-wide regimes (\(n/p < 0.2\)), learned embeddings
@@ -285,7 +301,7 @@ exhibit high inter-seed variance, producing
 \textbf{non-reproducible kNN graphs} and unstable
 downstream community structure.
 
-\vspace{1mm}
+\vspace{5mm}
 \centering
 {\small
 \begin{tabular}{@{} l c @{}}
@@ -307,7 +323,7 @@ constraint}.
 
 \end{columns}
 
-\vspace{1mm}
+\vspace{5mm}
 
 % ═══════════════════════════════════════════════════════════
 % ROW 5 — REFERENCES
@@ -317,8 +333,8 @@ constraint}.
 [1] Venna \& Kaski (2006). \textit{Neural Networks}.\quad
 [2] McInnes \textit{et al.} (2018). arXiv:1802.03426.\quad
 [3] Kilian \textit{et al.} (2012). \textit{Methods Mol.\ Biol.}\quad
-[4] CIP Dataverse: \texttt{data.cipotato.org}
-}
+[4] Rossel \& Robles (2025). \textit{CIP Dataverse}, doi:10.21223/P3/S2IMOS.\quad
+[5] Rossel \& Robles (2026). \textit{CIP Dataverse}, doi:10.21223/P3/UBDJ44}
 
 \end{frame}
 \end{document}
