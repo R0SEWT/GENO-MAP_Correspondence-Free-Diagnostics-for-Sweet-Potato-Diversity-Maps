@@ -1,188 +1,205 @@
-# TLDR
+# TL;DR
 
 Este trabajo muestra que:
 
-> Es posible validar rigurosamente mapas de diversidad genómica incluso cuando los datasets no comparten identificadores, y que en matrices ultra-anchas el embedding PCA es más estable que modelos profundos.
+> Es posible validar rigurosamente mapas de diversidad genómica incluso cuando los datasets no comparten identificadores, analizando directamente la **geometría del dataset** y su **estabilidad bajo perturbaciones**.
 
-
-# La idea central de la investigación
-
-Este trabajo intenta resolver un problema muy concreto en **genómica agrícola**.
-
-Hoy en día podemos medir **decenas de miles de marcadores genéticos** para cada planta.
-Eso genera matrices enormes donde cada fila es una variedad y cada columna un marcador del genoma.
-
-Con esos datos queremos responder preguntas como:
-
-* ¿Qué tan diversa es una colección de plantas?
-* ¿Qué variedades son genéticamente similares?
-* ¿Existen grupos o subpoblaciones genéticas?
-* ¿Hay accesiones duplicadas en el banco de germoplasma?
-
-Para explorarlo visualmente se suelen construir **mapas de diversidad genética**.
-
-Pero aparece un problema práctico importante.
+Además encontramos que en matrices genómicas **ultra-anchas** ((n \ll p)), el embedding **PCA es sustancialmente más estable que modelos profundos**.
 
 ---
 
-# El problema real
+# El problema
 
-Los datos genómicos suelen provenir de **paneles de genotipado distintos**.
-
-Cada panel puede usar **un sistema de identificadores diferente**.
-
-Por ejemplo, un dataset puede identificar una planta como:
+En genómica agrícola moderna es común trabajar con matrices donde:
 
 ```
-CIP_12345
+filas   → muestras (plantas)
+columnas → marcadores genéticos
 ```
 
-y otro como:
-
-```
-Plate_7_Well_B03
-```
-
-Sin una tabla externa que conecte ambos sistemas de IDs, **no hay forma de saber si representan la misma planta**.
-
-Esto rompe muchos métodos que intentan comparar datasets entre sí.
-
----
-
-# La idea de GENO-MAP
-
-En lugar de intentar alinear datasets con identificadores incompatibles, el proyecto propone otra estrategia:
-
-> **evaluar cada panel de datos por separado sin requerir correspondencia entre muestras.**
-
-A este enfoque lo llamamos:
-
-**correspondence-free validation**.
-
-La idea es analizar la **geometría del dataset** y responder preguntas como:
-
-* ¿El panel induce una estructura genética real?
-* ¿Los resultados dependen demasiado de decisiones del pipeline?
-* ¿Las relaciones entre muestras son estables?
-
----
-
-# Qué datos analizamos
-
-Usamos datasets de **camote (*Ipomoea batatas*)** provenientes del banco de germoplasma del CIP.
-
-Cada dataset tiene la forma:
-
-```
-muestras × marcadores
-```
-
-Por ejemplo:
-
-| dataset           | muestras | marcadores |
-| ----------------- | -------- | ---------- |
-| Global SNP        | 5970     | 20069      |
-| Global Silico     | 5970     | 57715      |
-| LowDensity SNP    | 630      | 62732      |
-| LowDensity Silico | 635      | 38272      |
-
-Esto produce matrices **ultra-anchas**.
-
-En algunos casos tenemos algo como:
+Un dataset típico puede verse así:
 
 ```
 630 muestras
 62 000 marcadores
 ```
 
-Es decir:
+Esto produce el régimen estadístico:
 
-[
+$$
 n \ll p
-]
+$$
 
-Este régimen es complicado porque muchos métodos de machine learning se vuelven **inestables** en este escenario.
+donde el número de variables supera ampliamente al número de muestras.
+
+Con estos datos queremos estudiar **diversidad genética**, por ejemplo:
+
+* identificar subpoblaciones
+* detectar duplicados en bancos de germoplasma
+* explorar relaciones genéticas entre accesiones
+
+Para hacerlo, los genetistas suelen construir **mapas de diversidad genética** mediante reducción de dimensionalidad.
 
 ---
 
-# Qué hace el pipeline GENO-MAP
+# El obstáculo práctico
 
-El pipeline transforma estas matrices gigantes en algo que los genetistas puedan explorar.
+En la práctica los datasets provienen de **paneles de genotipado distintos**.
 
-Produce tres cosas principales:
+Cada panel puede usar un sistema diferente de identificadores de muestras.
 
-1. **mapas 2D de diversidad genética**
-2. **grafos de similitud entre plantas**
-3. **diagnósticos automáticos de calidad del dataset**
+Por ejemplo:
 
-El flujo del método es:
+dataset A
+
+```
+CIP_12345
+```
+
+dataset B
+
+```
+Plate_7_Well_B03
+```
+
+Sin una tabla externa que conecte ambos sistemas de IDs, **no sabemos si representan la misma planta**.
+
+Esto rompe muchos enfoques de validación que requieren comparar embeddings entre datasets.
+
+---
+
+# La idea central de GENO-MAP
+
+El proyecto propone cambiar completamente la perspectiva.
+
+En lugar de intentar alinear datasets con identificadores incompatibles, evaluamos **cada panel de manera independiente**.
+
+La pregunta pasa a ser:
+
+> ¿La estructura geométrica inducida por el dataset es consistente y estable?
+
+A este enfoque lo llamamos:
+
+**correspondence-free validation**
+
+La validación no depende de saber qué muestra corresponde a cuál en otro dataset.
+
+Depende únicamente de propiedades **intrínsecas de la geometría del embedding**.
+
+---
+
+# Geometría del dataset
+
+Un dataset genómico puede interpretarse como una nube de puntos en un espacio de alta dimensión.
+
+Si tenemos 20 000 marcadores, cada planta vive en:
+
+$$
+\mathbb{R}^{20000}
+$$
+
+El objetivo de la reducción de dimensionalidad es encontrar una representación más compacta que preserve relaciones genéticas.
+
+En GENO-MAP usamos una jerarquía:
 
 ```
 genotype matrix
       ↓
-imputation (missing values)
+imputation
       ↓
 PCA (espacio analítico)
       ↓
 UMAP (visualización)
       ↓
-k-NN graph
+kNN graph
 ```
 
-Un detalle importante:
+Aquí hay una decisión importante:
 
-* **PCA se usa para calcular relaciones reales entre muestras**
-* **UMAP se usa solo para visualizar**
+* **PCA define el espacio analítico**
+* **UMAP solo se usa para visualización**
 
-Esto es importante porque UMAP es estocástico.
+Todas las relaciones entre muestras se calculan en el espacio PCA.
 
 ---
 
-# Qué es exactamente el mapa de diversidad
+# Qué produce el pipeline
 
-Imagina que cada planta es un punto en un espacio de **20 000 dimensiones**.
+El sistema genera tres artefactos principales:
 
-Cada dimensión corresponde a un marcador genético.
+### 1. Mapas 2D de diversidad
 
-Eso es imposible de visualizar directamente.
-
-Entonces hacemos una reducción de dimensionalidad:
-
-```
-20000 dimensiones
-↓
-PCA
-↓
-30 dimensiones
-↓
-UMAP
-↓
-2 dimensiones
-```
-
-En el mapa final:
+Representaciones visuales donde:
 
 * puntos cercanos → plantas genéticamente similares
 * puntos lejanos → plantas genéticamente distintas
 
 ---
 
-# Cómo evaluamos si el mapa es confiable
+### 2. Grafos de similitud genética
 
-El paper introduce dos herramientas.
+Se construye un grafo **k-nearest neighbors** donde cada nodo es una planta y las aristas conectan vecinos genéticos.
+
+Esto permite estudiar estructura poblacional o detectar duplicados.
 
 ---
 
-## 1. Diagnósticos geométricos del panel
+### 3. Diagnósticos automáticos del dataset
 
-Se analizan propiedades del embedding, por ejemplo:
+El pipeline calcula métricas que describen la **geometría del embedding**.
 
-* dimensionalidad efectiva
-* dominancia de PC1
-* reciprocidad de vecinos
-* componentes desconectadas
+---
 
-Esto permite detectar problemas como:
+# Diagnósticos geométricos
+
+Se analizan varias propiedades estructurales del espacio PCA.
+
+---
+
+## Dimensionalidad efectiva
+
+Mide cuántas dimensiones contienen señal genética real.
+
+Se estima a partir del espectro de autovalores del PCA.
+
+Un rank efectivo bajo indica que la diversidad genética está concentrada en pocos ejes.
+
+---
+
+## Dominancia del primer componente
+
+Se mide la fracción de varianza explicada por PC1.
+
+Valores muy altos pueden indicar:
+
+* estructura poblacional fuerte
+* o artefactos técnicos.
+
+---
+
+## Reciprocidad de vecinos
+
+Se construye un grafo k-NN y se mide qué proporción de relaciones son recíprocas.
+
+Alta reciprocidad indica que la geometría del embedding es coherente.
+
+Reciprocidad baja puede indicar ruido o distancias poco informativas.
+
+---
+
+## Componentes desconectadas
+
+Se analiza el número de componentes conectadas del grafo.
+
+Muchas componentes pueden indicar:
+
+* datasets fragmentados
+* missingness extremo
+* errores de genotipado.
+
+---
+
+A partir de estos diagnósticos el sistema genera **flags automáticos** como:
 
 ```
 HIGH-MISSINGNESS
@@ -190,59 +207,69 @@ EXTREME-WIDE
 DISCONNECTED
 ```
 
-que indican datasets potencialmente problemáticos.
+que alertan sobre posibles problemas en el dataset.
 
 ---
 
-## 2. Curvas de robustez
+# Validación mediante perturbaciones
 
-Aquí viene una de las ideas más interesantes.
+La segunda parte del framework evalúa **estabilidad estructural**.
 
-Degradamos artificialmente el dataset para ver qué tan estable es la estructura.
+La idea es simple:
 
-Por ejemplo:
+> si la estructura genética es real, debería sobrevivir perturbaciones razonables del dataset.
 
-* eliminar 95 % de los marcadores
-* agregar datos faltantes
-* cambiar el método de imputación
+Introducimos perturbaciones controladas como:
 
-Luego medimos cuánto cambia el grafo de similitud.
+* subsampling de marcadores
+* inyección de missing values
+* cambios en el método de imputación.
 
-Las métricas principales son:
+Luego medimos cuánto cambia la estructura del embedding.
 
-**Jaccard de vecinos**
+---
 
-[
+# Métricas de estabilidad
+
+Dos métricas principales.
+
+---
+
+## Estabilidad del subespacio PCA
+
+Se mide la similitud entre subespacios PCA antes y después de la perturbación.
+
+Valores cercanos a 1 indican que la estructura global del dataset se conserva.
+
+---
+
+## Estabilidad de vecindarios
+
+Para cada muestra se comparan los vecinos antes y después de la perturbación usando índice de Jaccard:
+
+$$
 J = \frac{|N_i \cap N_i'|}{|N_i \cup N_i'|}
-]
+$$
 
-y **similaridad del subespacio PCA**.
+Esto mide si las relaciones locales entre plantas se mantienen.
 
 ---
 
 # Resultado importante
 
-Incluso cuando eliminamos **95 % de los marcadores**, el subespacio PCA casi no cambia:
+Incluso cuando eliminamos **95 % de los marcadores**, el subespacio PCA se mantiene muy estable:
 
-[
+$$
 SS \ge 0.91
-]
+$$
 
-Esto significa que la estructura genética global **no depende de marcadores específicos**.
-
-La señal está distribuida por todo el genoma.
-
-En otras palabras:
-
-> **la señal genómica es redundante y robusta.**
+Esto sugiere que la señal genética está **distribuida a lo largo del genoma**, en lugar de depender de marcadores específicos.
 
 ---
 
-# Segundo resultado importante
+# Estabilidad del grafo
 
 Los vecindarios del grafo se degradan **de forma gradual**.
-
-No ocurre un colapso repentino.
 
 Por ejemplo:
 
@@ -253,24 +280,23 @@ Por ejemplo:
 80% markers  → J ≈ 0.84
 ```
 
-Esto permite definir **umbrales de calidad** para datasets genómicos.
+No se observa un colapso abrupto de la estructura.
+
+Esto permite definir **umbrales de calidad para datasets genómicos**.
 
 ---
 
-# El experimento con autoencoders
+# Experimento con autoencoders
 
-También probamos un enfoque moderno:
-un **autoencoder neuronal** para aprender el embedding.
+También probamos embeddings aprendidos mediante **autoencoders neuronales**.
 
-La idea era que un modelo no lineal podría capturar mejor la estructura genética.
-
-Pero ocurrió algo interesante.
+La hipótesis era que modelos no lineales podrían capturar mejor la estructura genética.
 
 ---
 
-# Resultado inesperado
+# Resultado
 
-El autoencoder mejora ligeramente una métrica llamada **trustworthiness**, pero pierde mucha estabilidad.
+Los autoencoders mejoran ligeramente una métrica llamada **trustworthiness**, pero pierden estabilidad.
 
 Por ejemplo:
 
@@ -279,30 +305,45 @@ PCA stability ≈ 0.89
 AE stability  ≈ 0.52
 ```
 
-En datasets pequeños el problema es aún peor.
+Además cada entrenamiento produce embeddings diferentes.
 
-Esto significa que:
-
-* cada entrenamiento produce un embedding distinto
-* el grafo cambia entre ejecuciones
-
-Por eso la conclusión es:
-
-> En matrices genómicas **n ≪ p**, PCA sigue siendo el método más confiable.
+Esto genera grafos de similitud inconsistentes.
 
 ---
 
-# El insight conceptual del trabajo
+# Interpretación
 
-El aporte principal no es solo el pipeline.
+La razón está en el régimen estadístico del problema.
+
+En datasets donde:
+
+$$
+n \ll p
+$$
+
+PCA tiene ventajas estructurales:
+
+* solución analítica
+* embedding determinístico
+* comportamiento reproducible.
+
+Los autoencoders, en cambio, dependen de optimización no convexa y pueden converger a representaciones distintas.
+
+---
+
+# Insight conceptual
+
+El aporte principal del trabajo no es solo el pipeline.
 
 Es el **marco de validación**.
 
-El trabajo muestra que es posible evaluar mapas de diversidad genética usando:
+Mostramos que es posible evaluar mapas de diversidad genética usando:
 
 * diagnósticos geométricos
 * estabilidad bajo perturbaciones
 
 sin necesidad de alinear datasets con identificadores incompatibles.
 
----
+En otras palabras:
+
+> La validez de un mapa de diversidad genética depende de que la **geometría del dataset sea estable**, no de conocer la correspondencia entre muestras.
