@@ -1,5 +1,5 @@
 # GENO-MAP: Correspondence-Free Diagnostics for Sweet Potato Diversity Maps
-
+  
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=R0SEWT-GENO-MAP&label=repo+views&color=0072B2&style=flat-square" alt="Repo views"/>
   <img src="https://img.shields.io/badge/python-≥3.10-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
@@ -8,12 +8,36 @@
   <img src="https://img.shields.io/badge/license-academic_UPC-grey?style=flat-square" alt="License"/>
 </p>
 
-> Correspondence-free validation of disjoint DArT panels via geometry diagnostics and robustness curves; PCA is the stable analytic baseline in *n ≪ p*.
+📊 [Poster](docs/poster/poster_a1.pdf) · 📖 [Explainer](docs/explainer-en.md) · 💻 [Pipeline overview](#overview)
 
-**Authors:** Rody Vilchez Marin · Christian Velasquez Borasino · Giorgio Mancusi Barreda  
-**Affiliation:** Universidad Peruana de Ciencias Aplicadas (UPC), Lima, Perú
+> A reproducible pipeline for mapping genomic diversity in sweet potato collections,
+> validating diversity maps **without requiring shared identifiers across panels**.
 
 ---
+### 📖 Two ways to read this repository
+
+- **🌱 Explainer (non-technical)** — intuitive explanation of the problem and results  
+  → [English version](docs/explainer-en.md)  
+  → [Versión español](docs/explainer-es.md)
+
+- **🔎 Technical documentation** — full pipeline, experiments, and reproducibility  
+  → continue reading below
+
+---
+
+## Why this project exists
+
+Modern crop genotyping datasets contain tens of thousands of markers
+for each plant. Visualizing the genetic diversity of these collections
+is essential for plant breeders and germplasm curators.
+
+However, in practice many genotyping panels use **different identifier
+systems**, making it impossible to align datasets directly.
+
+GENO-MAP proposes a different approach:
+
+**validate diversity maps without requiring shared identifiers.**
+
 
 ## 📌 Scanned the QR at the conference?
 
