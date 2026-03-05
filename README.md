@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/license-academic_UPC-grey?style=flat-square" alt="License"/>
 </p>
 
-📊 [Poster](docs/poster/poster_a1.pdf) · 📖 [Explainer](docs/explainer-en.md) · 💻 [Pipeline overview](#overview)
+📊 [Poster](docs/poster/poster_a1.pdf) · 📖 [Explainer](docs/explainer-es.md) · 💻 [Pipeline overview](#overview)
 
 > A reproducible pipeline for mapping genomic diversity in sweet potato collections,
 > validating diversity maps **without requiring shared identifiers across panels**.
