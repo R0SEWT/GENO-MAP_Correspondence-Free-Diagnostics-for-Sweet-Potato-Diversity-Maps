@@ -1,0 +1,23 @@
+[project]
+name = "oxor-genomics"
+version = "0.1.0"
+description = "Embeddings y grafos kNN para genotipos DArT/DArTSeq andinos."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.26.0",
+  "pandas>=2.1.0",
+  "scikit-learn>=1.3.0",
+  "umap-learn>=0.5.5",
+  "torch>=2.0",
+  "matplotlib>=3.7",
+  "seaborn>=0.12",
+  "openpyxl>=3.1",
+  "tabulate>=0.9",
+]
+
+[tool.uv]
+dev-dependencies = [
+  "ipykernel",
+  "pytest",
+]
