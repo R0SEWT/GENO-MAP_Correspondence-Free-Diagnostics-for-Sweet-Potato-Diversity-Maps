@@ -4,7 +4,7 @@ Este trabajo muestra que:
 
 > Es posible validar rigurosamente mapas de diversidad genómica incluso cuando los datasets no comparten identificadores, analizando directamente la **geometría del dataset** y su **estabilidad bajo perturbaciones**.
 
-Además encontramos que en matrices genómicas **ultra-anchas** ((n \ll p)), el embedding **PCA es sustancialmente más estable que modelos profundos**.
+Además encontramos que en matrices genómicas **ultra-anchas** $n \ll p$, el embedding **PCA es sustancialmente más estable que modelos profundos**.
 
 ---
 
