@@ -86,7 +86,7 @@ python -m venv .venv && source .venv/bin/activate && pip install -r requirements
 ```
 ├── scripts/
 │   ├── build_embeddings.py        # PCA/UMAP embedding + kNN graph builder
-│   ├── generate_poster_figures.py # All poster figures (Frontiers style)
+│   ├── generate_poster_figures.py # All poster figures
 │   ├── robustness_curves.py       # Marker subsampling & MCAR injection
 │   ├── panel_diagnostics.py       # Geometry QA diagnostics
 │   ├── run_autoencoder.py         # AE-64D baseline comparison
