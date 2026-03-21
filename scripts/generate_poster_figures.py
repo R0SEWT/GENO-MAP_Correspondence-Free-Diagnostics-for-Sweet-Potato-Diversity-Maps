@@ -16,7 +16,7 @@ Style: Frontiers in Plant Science / Genetics
   • Panel labels: bold (A), (B), … top-left
 
 Usage:
-    python3 scripts/generate_poster_figures.py [--outdir docs/figures/poster]
+    python3 scripts/generate_poster_figures.py [--outdir docs/poster/figures]
 """
 from __future__ import annotations
 
@@ -29,6 +29,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
+
+ROOT = Path(__file__).resolve().parent.parent
 
 # ── Frontiers house style ───────────────────────────────────────────
 DPI = 300
@@ -246,7 +248,7 @@ def fig4_robustness(out: Path):
 
     Improvements for poster readability:
     - Distinct marker shapes per panel (visible from 1–2 m)
-    - Semantic background zones (safe / caution / degraded)
+    - Soft QA reference bands
     - Key threshold annotations
     - Heavier lines and larger markers
     """
@@ -256,35 +258,27 @@ def fig4_robustness(out: Path):
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(DOUBLE_COL_MM * MM, 90 * MM), sharey=True)
 
-    # ── Semantic zones (both panels) ──
+    # ── Soft QA reference bands (both panels) ──
     for ax in (ax1, ax2):
-        ax.axhspan(0.80, 1.02, color="#009E73", alpha=0.06, zorder=0)   # safe
-        ax.axhspan(0.60, 0.80, color="#E69F00", alpha=0.06, zorder=0)   # caution
-        ax.axhspan(0.00, 0.60, color="#D55E00", alpha=0.06, zorder=0)   # degraded
-        ax.axhline(0.80, ls=":", lw=0.5, color="#999", zorder=0)
-        ax.axhline(0.60, ls=":", lw=0.5, color="#999", zorder=0)
+        ax.axhspan(0.80, 1.02, color="#3A7D44", alpha=0.025, zorder=0)
+        ax.axhspan(0.60, 0.80, color="#B98918", alpha=0.02, zorder=0)
+        ax.axhspan(0.00, 0.60, color="#A44A3F", alpha=0.018, zorder=0)
+        ax.axhline(0.80, ls=":", lw=0.45, color="#B5B5B5", alpha=0.7, zorder=0)
+        ax.axhline(0.60, ls=":", lw=0.45, color="#B5B5B5", alpha=0.7, zorder=0)
 
     # (A) Marker subsampling
     fracs = [f * 100 for f in MK_F]
     for i, ds in enumerate(DATASET_ORDER):
         ax1.plot(fracs, MK_J[ds],
-                 marker=MARKERS[i], color=C[ds], label=DS_LABEL[ds],
+                 marker=MARKERS[i], color=C[ds],
                  ms=MS, lw=1.8, markeredgecolor="white", markeredgewidth=0.5)
     ax1.set_xlabel("Markers retained (%)")
     ax1.set_ylabel("Jaccard neighbor overlap ($J_{\\mathrm{nbr}}$)")
     ax1.set_ylim(0.35, 1.02)
     ax1.set_xlim(0, 85)
     ax1.xaxis.set_major_locator(mticker.MultipleLocator(20))
-    ax1.grid(axis="y", lw=0.3, alpha=0.4)
+    ax1.grid(axis="y", lw=0.3, alpha=0.25)
     _lbl(ax1, "A")
-
-    # Zone labels (right edge of panel A)
-    ax1.text(83, 0.91, "safe", fontsize=6, color="#009E73",
-             ha="right", va="center", fontstyle="italic", alpha=0.7)
-    ax1.text(83, 0.70, "caution", fontsize=6, color="#E69F00",
-             ha="right", va="center", fontstyle="italic", alpha=0.7)
-    ax1.text(83, 0.48, "degraded", fontsize=6, color="#D55E00",
-             ha="right", va="center", fontstyle="italic", alpha=0.7)
 
     # SS inset (repositioned to avoid data overlap)
     ins = ax1.inset_axes([0.55, 0.12, 0.42, 0.30])
@@ -293,36 +287,32 @@ def fig4_robustness(out: Path):
                  marker=MARKERS[i], color=C[ds], markersize=3, lw=1.0,
                  markeredgecolor="white", markeredgewidth=0.3)
     ins.set_ylabel("SS", fontsize=7, labelpad=2)
-    ins.set_xlabel("Markers (%)", fontsize=7, labelpad=2)
     ins.set_ylim(0.90, 1.005)
-    ins.tick_params(labelsize=6)
+    ins.set_xticks([])
+    ins.tick_params(axis="x", length=0)
+    ins.tick_params(axis="y", labelsize=6)
     ins.axhline(0.91, ls="--", lw=0.5, color="grey", alpha=0.6)
-    ins.set_title("PCA subspace sim.", fontsize=7, pad=2)
-    for sp in ["top", "right"]:
+    ins.set_title("PCA subspace", fontsize=7, pad=2, color="#555")
+    for sp in ["top", "right", "bottom"]:
         ins.spines[sp].set_visible(False)
     # Annotation: "≥ 0.91 even at 5%"
     ins.annotate("≥ 0.91 at 5%", xy=(5, 0.917), xytext=(30, 0.925),
-                 fontsize=5.5, color="#555", ha="center",
-                 arrowprops=dict(arrowstyle="->", color="#999", lw=0.5))
+                 fontsize=5.5, color="#666", ha="center",
+                 arrowprops=dict(arrowstyle="->", color="#AAA", lw=0.45))
 
     # (B) Missing injection
     rates = [r * 100 for r in MS_R]
     for i, ds in enumerate(DATASET_ORDER):
         ax2.plot(rates, MS_J[ds],
-                 marker=MARKERS[i], color=C[ds], label=DS_LABEL[ds],
+                 marker=MARKERS[i], color=C[ds],
                  ms=MS, lw=1.8, markeredgecolor="white", markeredgewidth=0.5)
     ax2.set_xlabel("Additional MCAR missing (%)")
     ax2.set_xlim(-1, 22)
     ax2.xaxis.set_major_locator(mticker.MultipleLocator(5))
-    ax2.grid(axis="y", lw=0.3, alpha=0.4)
+    ax2.grid(axis="y", lw=0.3, alpha=0.25)
     _lbl(ax2, "B")
 
-    # Shared legend
-    h, l = ax1.get_legend_handles_labels()
-    fig.legend(h, l, loc="lower center", ncol=4,
-               bbox_to_anchor=(0.5, -0.02), fontsize=8, frameon=False)
-
-    fig.tight_layout(rect=[0, 0.07, 1, 1], w_pad=1.5)
+    fig.tight_layout(w_pad=1.5)
     fig.savefig(out / "fig4_robustness_hero.png")
     fig.savefig(out / "fig4_robustness_hero.pdf")
     plt.close(fig)
@@ -626,11 +616,12 @@ def fig5_umap_single(out: Path):
 def main():
     ap = argparse.ArgumentParser(
         description="Generate poster figures (Frontiers style)")
-    ap.add_argument("--outdir", default="docs/figures/poster",
-                    help="Output directory (default: docs/figures/poster)")
+    ap.add_argument("--outdir", type=Path,
+                    default=ROOT / "docs" / "poster" / "figures",
+                    help="Output directory (default: docs/poster/figures)")
     args = ap.parse_args()
 
-    out = Path(args.outdir)
+    out = args.outdir
     out.mkdir(parents=True, exist_ok=True)
 
     _style()

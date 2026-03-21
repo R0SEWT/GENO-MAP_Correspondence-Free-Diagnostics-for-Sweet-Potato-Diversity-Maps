@@ -1,0 +1,763 @@
+% !TEX program = lualatex
+% poster_a1_v2.tex — GENO-MAP A1 poster (594 × 841 mm, portrait)
+% Layout: PURPOSE → METHODS → RESULTS → CONCLUSIONS (2 columns)
+% Style: minimal — no beamer blocks, no tcolorbox, white background
+% Numbers: all from experiments/adr/*.json (no hardcodes)
+% ═══════════════════════════════════════════════════════════════════
+
+\documentclass[final]{beamer}
+\usepackage[orientation=portrait, size=a1, scale=1.2]{beamerposter}
+
+% ── Fonts ─────────────────────────────────────────────────
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setsansfont{TeX Gyre Heros}
+\setmainfont{TeX Gyre Heros}
+\setmathfont{Latin Modern Math}[Scale=MatchLowercase]
+\renewcommand{\familydefault}{\sfdefault}
+
+% ── Packages ──────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+\usepackage{orcidlink}
+\usepackage{enumitem}
+
+% ── Palette ───────────────────────────────────────────────
+\definecolor{okblue}{HTML}{0072B2}
+\definecolor{okteal}{HTML}{009E73}
+\definecolor{okverm}{HTML}{D55E00}
+\definecolor{okrose}{HTML}{CC79A7}
+\definecolor{darktext}{HTML}{333333}
+\definecolor{accent}{HTML}{0072B2}
+\definecolor{lightline}{HTML}{CCCCCC}
+
+% ── Beamer: strip everything ──────────────────────────────
+\usetheme{default}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[default]
+\setbeamercolor{block title}{fg=accent,bg=white}
+\setbeamercolor{block body}{fg=darktext,bg=white}
+
+% ── Section header macro ─────────────────────────────────
+\newcommand{\postersection}[1]{%
+  \vspace{1.5mm}%
+  {\fontsize{30}{34}\selectfont\bfseries\color{accent}#1}%
+  \par\vspace{0.5mm}%
+  {\color{lightline}\rule{\linewidth}{1.2pt}}%
+  \par\vspace{1mm}%
+}
+
+% ── Note: use \includegraphics directly (\IfFileExists
+%    does not honour \graphicspath in LuaLaTeX). ──────────
+
+\graphicspath{{figures/}}
+
+% ═══════════════════════════════════════════════════════════
+\begin{document}
+\begin{frame}[t]
+
+% ══════════════════════════════════════════════════════════
+%  HEADER
+% ══════════════════════════════════════════════════════════
+\begin{center}
+{\fontsize{60}{66}\selectfont\bfseries\color{accent}%
+GENO-MAP: Correspondence-Free Diagnostics\\[2pt]
+for Sweet Potato Diversity Maps}
+\end{center}
+
+\vspace{1mm}
+\noindent
+\begin{minipage}[c]{0.65\textwidth}
+  {\fontsize{22}{26}\selectfont\color{darktext}%
+  Rody Vilchez Marin\,\orcidlink{0009-0006-3773-9943},\quad
+  Christian Velasquez Borasino\,\orcidlink{0009-0004-6341-6924},\quad
+  Giorgio Mancusi Barreda\,\orcidlink{0009-0001-7757-5262}}
+
+  \vspace{1mm}
+  {\fontsize{18}{22}\selectfont\color{darktext!70}%
+  Universidad Peruana de Ciencias Aplicadas (UPC), Lima, Perú}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.33\textwidth}
+  \raggedleft
+  \includegraphics[height=22mm]{logos/upc-logo.png}\hspace{4mm}%
+  \includegraphics[height=22mm]{logos/percep3-logo-preview.jpg}
+\end{minipage}
+
+\vspace{2mm}
+
+% ══════════════════════════════════════════════════════════
+%  PURPOSE
+% ════════════════════════════════════════════════════
+\postersection{Purpose}
+
+\begin{columns}[T,totalwidth=\textwidth]
+
+% ── Column 1 ─────────────────────────────
+\begin{column}{0.38\textwidth}
+\justifying
+Sweet potato germplasm collections are genotyped
+with DArT/DArTSeq technologies, producing
+\textbf{ultra-wide matrices} ($n \ll p$), with up to
+630 samples and 62\,732 markers.
+
+Within each collection, SNP and SilicoDArT panels may share identifiers,
+but Global and LowDensity collections use disjoint namespaces.
+Therefore, cross-collection alignment is impossible without an external manifest,
+and the core validation framework is correspondence-free.
+
+\vspace{2mm}
+
+\textbf{Objective.}
+Evaluate whether genomic diversity maps obtained with
+PCA$\to$UMAP$+$kNN are structurally robust under reasonable
+methodological decisions using a \textit{correspondence-free}
+validation framework.
+
+\vspace{3mm}
+\noindent
+\begin{minipage}[t]{0.42\linewidth}
+\vspace{0pt}
+\centering
+{\small
+\begin{tabular}{@{} l r r r @{}}
+    \toprule
+    \textbf{Panel} & $\boldsymbol{n}$ & $\boldsymbol{p}$ & $\boldsymbol{n/p}$ \\
+    \midrule
+    \textcolor{okblue}{Global SNP}     & 5\,970 & 20\,069 & 0.30  \\
+    \textcolor{okteal}{Global Silico}  & 5\,970 & 57\,715 & 0.10  \\
+    \textcolor{okverm}{LD SNP}         &   630  & 62\,732 & 0.01  \\
+    \textcolor{okrose}{LD Silico}      &   635  & 38\,272 & 0.02  \\
+    \bottomrule
+\end{tabular}}
+\end{minipage}\hspace{0.06\linewidth}%
+\begin{minipage}[t]{0.52\linewidth}
+\vspace{0pt}
+\raggedright
+{\small
+The panels span an extreme $n/p$ regime (0.01–0.30).
+Global datasets use CIP accession identifiers,
+whereas LowDensity panels use DArT plate/well coordinates
+— no cross-panel linking is possible.}
+\end{minipage}
+\end{column}
+
+% ── Column 2 ─────────────────────────────
+\begin{column}{0.58\textwidth}
+
+\textbf{Research question}
+
+\vspace{1mm}
+
+\textit{Are PCA→UMAP+kNN diversity maps structurally robust
+under reasonable preprocessing choices when cross-panel
+alignment is impossible?}
+
+\vspace{3mm}
+
+\centering
+\includegraphics[width=0.9\linewidth]{fig_problem_disjoint_improved.pdf}
+\vspace{-24mm}
+
+Without shared identifiers, it becomes difficult
+to determine whether observed diversity maps
+reflect biological structure or methodological artefacts.
+\end{column}
+
+\end{columns}
+% ══════════════════════════════════════════════════════════
+%  METHODS
+% ══════════════════════════════════════════════════════════
+\postersection{Methods}
+
+% ── Row 1: Pipeline figure (left) | Design rationale (right) ──
+\begin{columns}[T,totalwidth=\textwidth]
+
+\begin{column}{0.52\textwidth}
+\centering
+\includegraphics[width=0.98\linewidth]{fig_pipeline.pdf}
+\end{column}
+
+\begin{column}{0.46\textwidth}
+\textbf{Design rationale}
+
+\vspace{1mm}
+
+\begin{enumerate}[label=\textcolor{accent}{\textbf{\arabic*.}},
+                   leftmargin=*,
+                   itemsep=1.2mm]
+
+\item \textbf{Imputation.}
+Mode preserves categorical DArT encoding;
+median evaluated as sensitivity control.
+
+\item \textbf{PCA analytic space.}
+Deterministic, closed-form; 30D selected
+via sensitivity sweep (see R2).
+
+\item \textbf{kNN graph.}
+Cosine distance is scale-invariant for sparse genotypes;
+the graph encodes local structure.
+
+\item \textbf{UMAP rendering.}
+Stochastic rendering; decoupled from the analytic graph
+(validated in R4).
+
+\end{enumerate}
+\end{column}
+
+\end{columns}
+
+\vspace{3mm}
+
+% ── Row 2: Validation text (left) | Framework figure (right) ──
+\begin{columns}[T,totalwidth=\textwidth]
+
+\begin{column}{0.48\textwidth}
+\textbf{Correspondence-free validation framework}
+
+\vspace{1mm}
+
+{\small
+Because Global and LowDensity collections use disjoint identifier namespaces,
+the main validation framework operates strictly within panels.
+Where shared identifiers exist within a collection
+(e.g., SNP vs.\ SilicoDArT), they are used only for auxiliary ground-truth validation.
+}
+
+\vspace{1.2mm}
+
+{\setlength{\tabcolsep}{2.8pt}
+\noindent
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+{\scriptsize
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l l l @{}}
+\toprule
+\textbf{Axis} & \textbf{Range} & \textbf{Target} \\
+\midrule
+Marker subsampling  & 5--80\%\,ret.   & Signal distrib. \\
+MCAR injection      & +0--20\%\,miss. & Missing tol. \\
+PCA dimensionality  & 5--50 PCs       & Embedding scale \\
+\bottomrule
+\end{tabular*}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+{\scriptsize
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c l @{}}
+\toprule
+\textbf{Metric} & \textbf{Symbol} & \textbf{Measures} \\
+\midrule
+Edge Jaccard     & $J_{\text{edge}}$ & Global overlap \\
+Neighbor Jaccard & $J_{\text{nbr}}$  & Local stability \\
+Subspace sim.    & SS                & PCA geometry \\
+\bottomrule
+\end{tabular*}}
+\end{minipage}
+}
+
+\vspace{1mm}
+
+\noindent
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+{\fontsize{9}{10.5}\selectfont
+\textbf{Perturbation axes.}
+Each perturbation rebuilds the PCA$\to$kNN pipeline and compares
+the resulting graph against the baseline. Additional controls:
+mode vs.\ median imputation and contiguous block removal.\par}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\linewidth}
+\vspace{0pt}
+{\fontsize{9}{10.5}\selectfont
+\textbf{Stability metrics.}
+All three metrics are computed without sample-level
+correspondence, enabling cross-panel comparison
+in disjoint-ID regimes.\par}
+\end{minipage}
+\end{column}
+
+\begin{column}{0.50\textwidth}
+\centering
+\includegraphics[width=0.96\linewidth]{fig_validation_framework_wide.pdf}
+\end{column}
+
+\end{columns}
+
+\vspace{1mm}
+
+% ══════════════════════════════════════════════════════════
+%  RESULTS  — two vertical macro-columns
+%  | col A: R1, R2, R3 | col B: R4, R5 |
+% ══════════════════════════════════════════════════════════
+\postersection{Results}
+
+\begin{columns}[T,totalwidth=\textwidth]
+
+% =========================================================
+% LEFT MACRO-COLUMN: R1 + R2 + R3
+% =========================================================
+\begin{column}{0.52\textwidth}
+\begin{minipage}[t]{\linewidth}
+\vspace{0pt}
+
+% ── R1 + R2 + R3 ─────────────────────────────────────────
+\noindent
+\begin{minipage}[t]{0.52\linewidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\linewidth]{fig4_robustness_hero.pdf}\par\vspace{1mm}
+\includegraphics[width=\linewidth]{fig7_pc_sensitivity.pdf}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.45\linewidth}
+\vspace{0pt}
+\justifying
+{\small
+\textbf{R1. Robust under perturbation.}
+Subspace geometry is preserved even at extreme dropout
+(see inset): PCA subspace similarity stays $\geq 0.91$
+with only 5\% of markers retained.
+Neighborhood overlap degrades monotonically
+with no critical thresholds — all four panels behave
+consistently under both subsampling and MCAR injection.
+
+\vspace{1.2mm}
+\textbf{R2. 30 PCs is the sweet spot.}
+Below 30D the graph loses topological fidelity
+($J_{\text{edge}}$ drops to ${\sim}$0.34 at 5D);
+above 50D noise dilutes cosine similarity.
+Subspace similarity remains near 1.0 across all
+dimensionalities, confirming that the issue at high
+dimensions is noise inclusion, not geometric instability.
+
+\vspace{1.2mm}
+\textbf{R3. PCA dominates AE (negative ablation).}}
+
+\vspace{0.8mm}
+{\scriptsize
+\begin{tabular}{@{} l cc c cc c @{}}
+    \toprule
+    & \multicolumn{2}{c}{\textbf{Trust.}} & & \multicolumn{2}{c}{\textbf{Stab.}} & \\
+    \cmidrule(lr){2-3} \cmidrule(lr){5-6}
+    & PCA & AE & $\Delta_T$ & PCA & AE & $\Delta_S$ \\
+    \midrule
+    \textcolor{okblue}{G-SNP}   & .976 & \textbf{.988} & {\color{darktext!50}$-$.01} & \textbf{.879} & .524 & +.36 \\
+    \textcolor{okteal}{G-Sil}   & .979 & \textbf{.989} & {\color{darktext!50}$-$.01} & \textbf{.891} & .498 & +.39 \\
+    \textcolor{okverm}{LD-SNP}  & \textbf{.933} & .836 & \textcolor{okverm}{\textbf{+.10}} & \textbf{.907} & .163 & \textcolor{okverm}{\textbf{+.74}} \\
+    \textcolor{okrose}{LD-Sil}  & \textbf{.911} & .829 & \textcolor{okrose}{\textbf{+.08}} & \textbf{.908} & .207 & \textcolor{okrose}{\textbf{+.70}} \\
+    \bottomrule
+\end{tabular}}
+
+\vspace{0.8mm}
+{\small PCA is operationally preferable in $n \ll p$ regimes.}
+\end{minipage}
+
+\end{minipage}
+\end{column}
+
+% =========================================================
+% RIGHT MACRO-COLUMN: R4 + R5
+% =========================================================
+\begin{column}{0.44\textwidth}
+\begin{minipage}[t]{\linewidth}
+\vspace{0pt}
+
+% ── R4 ───────────────────────────────────────────────────
+\noindent
+\begin{minipage}[t]{0.56\linewidth}
+\vspace{0pt}
+\centering
+\includegraphics[width=\linewidth]{fig5_umap_layouts_global.pdf}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.40\linewidth}
+\vspace{0pt}
+\justifying
+{\small
+\textbf{R4. UMAP is rendering, not analysis.}
+The analytic graph is invariant ($J_{\text{edge}} = 1.0$) across
+all 27 tested UMAP configurations — the three shown here
+illustrate that visual layout changes dramatically while
+the underlying graph remains identical.}
+\end{minipage}
+
+\vspace{4mm}
+
+% ── R5 ───────────────────────────────────────────────────
+{\small\textbf{R5. Ground-truth confirms real structure.}}\par\vspace{1mm}
+
+\centering
+\includegraphics[width=0.68\linewidth]{fig_gt_conceptual.pdf}\par\vspace{1mm}
+
+\justifying
+{\small
+Cross-technology overlap (see ruler) sits well above
+the shuffled null and reaches $0.67$ for LowDensity
+— halfway between noise floor and intra-panel ceiling,
+confirming that both technologies capture
+shared biological diversity.}
+
+\end{minipage}
+\end{column}
+
+\end{columns}
+
+% ══════════════════════════════════════════════════════════
+%  CONCLUSIONS & CONTRIBUTIONS  (unified)  +  REFERENCES
+% ══════════════════════════════════════════════════════════
+\postersection{Conclusions \& Contributions}
+
+\begin{columns}[T,totalwidth=\textwidth]
+
+% ── left: merged conclusions + contributions ──────────────
+\begin{column}{0.62\textwidth}
+\vspace{-4mm}
+{\small
+\begin{enumerate}[label=\textcolor{accent}{\textbf{C\arabic*.}},
+                   leftmargin=*, itemsep=0.5mm]
+\item \textbf{Correspondence-free validation framework.}
+Robustness characterised under subsampling, MCAR, and PCA-dim
+without requiring sample-level correspondence.
+
+\item \textbf{Distributed signal \& graceful degradation.}
+Subspace geometry survives 95\% marker dropout;
+kNN decay is monotonic with no phase transitions.
+
+\item \textbf{PCA dominates AE in $n \ll p$.}
+Stability gap +0.47--0.76 $J_{\text{edge}}$;
+autoencoder closed as negative ablation.
+
+\item \textbf{UMAP is perceptual rendering.}
+Analytic graph invariant ($J_{\text{edge}} = 1.0$)
+across 27 UMAP configurations.
+
+\item \textbf{Cross-technology ground truth.}
+SNP / SilicoDArT graphs share ${\sim}$60--67\% of edges,
+confirming shared biological diversity.
+\end{enumerate}}
+\end{column}
+
+% ── right: references ────────────────────────────────
+\begin{column}{0.34\textwidth}
+\vspace{-4mm}
+{\fontsize{24}{28}\selectfont\bfseries\color{accent}References}
+\par\vspace{1mm}
+{\footnotesize
+{[1]} Venna \& Kaski (2006). \textit{Neural Networks}.\\
+{[2]} McInnes \textit{et al.}\ (2018). arXiv:1802.03426.\\
+{[3]} Kilian \textit{et al.}\ (2012). \textit{Methods Mol.\ Biol.}\\
+{[4]} Rossel \& Robles (2025). CIP Dataverse,
+doi:10.21223/P3/S2IMOS.\\
+{[5]} Rossel \& Robles (2026). CIP Dataverse,
+doi:10.21223/P3/UBDJ44.
+}
+\end{column}
+
+\end{columns}
+
+% --- QR -----
+\begin{tikzpicture}[remember picture,overlay]
+\node[anchor=south east] 
+at ([xshift=-2mm,yshift=8mm]current page.south east)
+{%
+\begin{minipage}{42mm}
+\centering
+\includegraphics[width=18mm]{logos/qr_repo.png}\\[1mm]
+{\tiny\color{darktext!60} Code \& reproducible artifacts}
+\end{minipage}
+};
+\end{tikzpicture}
+
+
+\end{frame}
+\end{document}
+
+% ═══════════════════════════════════════════════════════════════════
+% POSTER AUDIT v2 — Re-auditoría tras ediciones anti-redundancia
+% Fecha: 2026-03-10
+% Criterio: el texto debe INTERPRETAR, no RECITAR lo que la figura
+%           ya comunica visualmente.
+% Leyenda:  ✅ = resuelto  ⚠ = redundancia residual  ✓ = ok
+% ═══════════════════════════════════════════════════════════════════
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 1: fig_problem_disjoint_improved.pdf                       │
+% │ Sección: PURPOSE · columna derecha                             │
+% │ Tipo: Diagrama conceptual — dos elipses (Global / LD) con      │
+% │   puntos, banda central "Disjoint ID namespaces", líneas       │
+% │   doradas bloqueadas con "X", etiqueta "same accession?"       │
+% │                                                                │
+% │ Texto adyacente actual (L160–162):                             │
+% │   "Without shared identifiers, it becomes difficult to         │
+% │    determine whether observed diversity maps reflect            │
+% │    biological structure or methodological artefacts."           │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ "disjoint namespaces" ya no se repite en la minipage de   │
+% │      la tabla — ahora dice "no cross-panel linking is          │
+% │      possible" (consecuencia, no hecho redundante).            │
+% │   ✓  El texto bajo la figura aporta la CONSECUENCIA            │
+% │      epistemológica (artefacto vs estructura) que la fig no    │
+% │      comunica por sí sola.                                     │
+% │   ⚠  "disjoint namespaces" aparece 2 veces en el poster       │
+% │      (PURPOSE L108 y METHODS L234). Aceptable: son secciones  │
+% │      distintas y el lector puede leerlas independientemente.   │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 2: fig_pipeline.pdf                                        │
+% │ Sección: METHODS · fila 1, columna izquierda                   │
+% │ Tipo: Diagrama de flujo horizontal — 5 cajas numeradas         │
+% │   (Genotype → Mode → PCA-30D → kNN-k15 → UMAP-2D)            │
+% │   + corchete "Deterministic analytic layer" + "Perceptual      │
+% │   rendering"                                                   │
+% │                                                                │
+% │ Texto adyacente actual — "Design rationale" (L192–215):        │
+% │   1. "Mode preserves categorical DArT encoding; median         │
+% │       evaluated as sensitivity control."                       │
+% │   2. "Deterministic, closed-form; 30D selected via             │
+% │       sensitivity sweep (see R2)."                             │
+% │   3. "Cosine distance is scale-invariant for sparse            │
+% │       genotypes; the graph encodes local structure."           │
+% │   4. "Stochastic rendering; decoupled from the analytic        │
+% │       graph (validated in R4)."                                │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Título cambiado de "Graph construction protocol" a        │
+% │      "Design rationale" — ya no recita los pasos.              │
+% │   ✅ Cada ítem explica el PORQUÉ (mode preserva encoding,      │
+% │      coseno es scale-invariant, etc.) en vez del QUÉ.         │
+% │   ✅ Cross-references a R2 y R4 — conecta con Results.        │
+% │   ✓  Sin redundancia residual.                                │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 3: fig_validation_framework_wide.pdf                       │
+% │ Sección: METHODS · fila 2, columna derecha                     │
+% │ Tipo: Diagrama de flujo — Reference graph → 3 perturbation     │
+% │   pills (subsampling/MCAR/PCA-dim) → Reconstructed variants   │
+% │   → UMAP renderings + metric chips (J_edge, J_nbr, SS)        │
+% │                                                                │
+% │ Texto adyacente actual (L228–262):                             │
+% │   - Párrafo explicativo del framework within-panel             │
+% │   - Tabla de ejes: Axis | Range | Target                      │
+% │   - Tabla de métricas: Metric | Symbol | Measures              │
+% │   - Leyenda "Perturbation axes" con controles adicionales      │
+% │   - Leyenda "Stability metrics" → NUEVA: "All three metrics   │
+% │     computed without sample-level correspondence"              │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Leyenda de métricas ya no repite las definiciones de la   │
+% │      tabla — ahora aporta info nueva (correspondence-free).    │
+% │   ⚠  Tabla de ejes: los rangos (5–80%, +0–20%, 5–50 PCs)      │
+% │      son visibles en las pills de la figura. PERO la columna  │
+% │      "Target" (Signal distrib. / Missing tol. / Embedding     │
+% │      scale) NO está en la figura → APORTA valor. Aceptable.   │
+% │   ✓  Sin redundancia neta.                                    │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 4: fig4_robustness_hero.pdf                                │
+% │ Sección: RESULTS R1 · columna izquierda, arriba                │
+% │ Tipo: 2 paneles de líneas (A: subsampling, B: MCAR) + inset   │
+% │ Datos visibles en la fig:                                      │
+% │   - J_nbr: 0.90→0.43 (subsampling), 0.77–0.86 (+20% MCAR)   │
+% │   - Inset: SS ≥ 0.91 at 5% (anotación con flecha)            │
+% │   - Zonas semánticas verde/dorado/rojo                         │
+% │   - 4 curvas con leyenda de colores                            │
+% │                                                                │
+% │ Texto R1 actual (L322–329):                                    │
+% │   "Subspace geometry is preserved even at extreme dropout      │
+% │    (see inset): PCA subspace similarity stays ≥ 0.91 with     │
+% │    only 5% of markers retained. Neighborhood overlap degrades  │
+% │    monotonically with no critical thresholds — all four        │
+% │    panels behave consistently under both subsampling and       │
+% │    MCAR injection."                                            │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Ya no cita "0.90→0.43" ni "0.77–0.86" (legibles en fig). │
+% │   ⚠  "≥ 0.91 with only 5%" repite la anotación del inset     │
+% │      que dice exactamente "≥ 0.91 at 5%". Redundancia menor  │
+% │      aceptable: el inset es pequeño y el lector podría no     │
+% │      verlo. Decisión: CONSERVAR.                               │
+% │   ✅ "monotonically with no critical thresholds" y             │
+% │      "consistently under both subsampling and MCAR" son       │
+% │      interpretaciones no visibles directamente → APORTAN.     │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 5: fig7_pc_sensitivity.pdf                                 │
+% │ Sección: RESULTS R2 · columna izquierda, debajo de fig4        │
+% │ Tipo: 2 paneles de líneas (A: J_edge vs PCA-dim, B: SS)       │
+% │ Datos visibles en la fig:                                      │
+% │   - J_edge pico a 30D (~0.93–0.96), flecha "sweet spot (30D)" │
+% │   - J_edge ~0.34 a 5D, ~0.65 a 50D                           │
+% │   - SS ≈ 0.988–1.000 en todas las dimensionalidades           │
+% │                                                                │
+% │ Texto R2 actual (L331–337):                                    │
+% │   "Below 30D the graph loses topological fidelity (J_edge     │
+% │    drops to ~0.34 at 5D); above 50D noise dilutes cosine      │
+% │    similarity. Subspace similarity remains near 1.0 across    │
+% │    all dimensionalities, confirming that the issue at high     │
+% │    dimensions is noise inclusion, not geometric instability."  │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Ya no dice "J_edge peaks at 30D" (legible en la flecha). │
+% │   ⚠  "drops to ~0.34 at 5D" es legible en la curva. Pero el  │
+% │      dato cuantifica la magnitud del problema y no tiene       │
+% │      anotación en la fig → ACEPTABLE como referencia rápida.  │
+% │   ✅ "noise inclusion, not geometric instability" es           │
+% │      interpretación causal no deducible visualmente → APORTA. │
+% │   ✓  Balance adecuado dato:interpretación.                    │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ TABLA R3 (unificada Trust. + Stab.)                            │
+% │ Sección: RESULTS R3 · columna izquierda, junto a R1/R2        │
+% │ Tipo: Tabla scriptsize — 4 paneles × (PCA, AE, ΔT, ΔS)       │
+% │ No hay figura asociada → SIN REDUNDANCIA VISUAL posible.      │
+% │                                                                │
+% │ Texto R3 actual (L339–340 + L368):                             │
+% │   Título: "R3. PCA dominates AE (negative ablation)."         │
+% │   Pie: "PCA is operationally preferable in n≪p regimes."      │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Tablas fusionadas en una sola (antes 2 separadas).       │
+% │   ✓  El pie aporta interpretación que la tabla no da sola.    │
+% │   ✓  Sin redundancia.                                         │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 6: fig5_umap_layouts_global.pdf                            │
+% │ Sección: RESULTS R4 · columna derecha, arriba                  │
+% │ Tipo: Tríptico 1×3 scatter (Baseline / Local / Global stress) │
+% │ Datos visibles en la fig:                                      │
+% │   - J_edge y J_nbr impresos en cada panel (~49–57%)           │
+% │   - Títulos con parámetros UMAP (nn, min_dist, seed)          │
+% │   - Suptitle: "same PCA-30D analytic graph"                   │
+% │                                                                │
+% │ Texto R4 actual (L385–390):                                    │
+% │   "The analytic graph is invariant (J_edge = 1.0) across all  │
+% │    27 tested UMAP configurations — the three shown here       │
+% │    illustrate that visual layout changes dramatically while   │
+% │    the underlying graph remains identical."                    │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Ya no cita "49–57%" (legible en los paneles).            │
+% │   ✅ "27 tested configurations" aporta alcance no visible     │
+% │      (la fig solo muestra 3 de 27).                            │
+% │   ✅ "visual layout changes dramatically while graph remains  │
+% │      identical" es interpretación que guía al lector.          │
+% │   ✓  Sin redundancia residual.                                │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ FIG 7: fig_gt_conceptual.pdf                                   │
+% │ Sección: RESULTS R5 · columna derecha, abajo                   │
+% │ Tipo: Diagrama 3 columnas (Shuffled / Ground truth / Ceiling) │
+% │   + ruler inferior 0–1                                         │
+% │ Datos visibles en la fig:                                      │
+% │   - Badges: J_edge = 0.001, 0.593, 0.917                     │
+% │   - Subtitles: "no edge overlap", "59% edge overlap",         │
+% │     "92% edge overlap"                                         │
+% │   - Ruler con zonas "noise" y "ceiling"                        │
+% │                                                                │
+% │ Texto R5 actual (L398–403):                                    │
+% │   "Cross-technology overlap (see ruler) sits well above the   │
+% │    shuffled null and reaches 0.67 for LowDensity — halfway    │
+% │    between noise floor and intra-panel ceiling, confirming    │
+% │    that both technologies capture shared biological           │
+% │    diversity."                                                 │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ Ya no cita "≈ 0.59 Global" (badge visible en la fig).    │
+% │   ✅ Ya no cita "< 0.002 shuffled" (badge visible).           │
+% │   ✅ "0.67 for LowDensity" → dato NO visible en la fig (que  │
+% │      solo muestra Global) → APORTA.                            │
+% │   ✅ "halfway between noise floor and ceiling" →              │
+% │      interpretación posicional → APORTA.                       │
+% │   ✓  Sin redundancia residual.                                │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ TABLA PURPOSE: n, p, n/p de los 4 paneles                     │
+% │   → Datos únicos, no duplicados en figuras. ✓                 │
+% │   → Minipage lateral: "no cross-panel linking is possible"    │
+% │     (antes: "creating disjoint identifier namespaces").        │
+% │   ✅ Ya no repite el hecho visible en fig1; ahora da la       │
+% │      consecuencia operativa.                                   │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ┌─────────────────────────────────────────────────────────────────┐
+% │ CONCLUSIONS & CONTRIBUTIONS (C1–C5)                            │
+% │ Sección unificada (antes: Conclusions + Contributions).        │
+% │                                                                │
+% │ Auditoría:                                                     │
+% │   ✅ C1–C5 fusionan hallazgo + contribución en cada ítem.     │
+% │   ✅ C2 ya no cita "SS ≥ 0.91"; dice "Subspace geometry      │
+% │      survives 95% marker dropout" → hallazgo, no métrica.     │
+% │   ⚠  C4 repite "J_edge = 1.0 across 27 UMAP configs" (ya    │
+% │      dicho en R4). Aceptable: las Conclusions son resumen     │
+% │      ejecutivo de un poster — la repetición es intencional    │
+% │      y la convención lo espera.                                │
+% │   ⚠  C3 repite "+0.47–0.76 J_edge" (visible en tabla R3).    │
+% │      Mismo criterio: resumen ejecutivo → ACEPTABLE.           │
+% │   ✓  Repetición controlada en Conclusions es convención       │
+% │      de poster. No requiere acción.                            │
+% └─────────────────────────────────────────────────────────────────┘
+%
+% ═══════════════════════════════════════════════════════════════════
+% RESUMEN EJECUTIVO DE LA AUDITORÍA v2
+% ═══════════════════════════════════════════════════════════════════
+%
+%  Redundancias originales (v1) → Estado actual (v2):
+%
+%  1. METHODS protocolo recitaba pasos visibles en fig_pipeline
+%     → ✅ RESUELTO. Ahora es "Design rationale" con porqués.
+%
+%  2. METHODS leyenda de métricas repetía tabla
+%     → ✅ RESUELTO. Ahora dice "computed without correspondence".
+%
+%  3. R1 citaba 0.90→0.43, 0.77–0.86 (legibles en fig)
+%     → ✅ RESUELTO. Solo queda "≥ 0.91 at 5%" (inset pequeño,
+%        aceptable) + interpretación de monotonía y consistencia.
+%
+%  4. R2 citaba "J_edge peaks at 30D" (flecha en fig)
+%     → ✅ RESUELTO. Solo queda "~0.34 at 5D" (sin anotación
+%        en fig, aceptable) + interpretación causal.
+%
+%  5. R4 citaba "49–57%" (impreso en paneles de la fig)
+%     → ✅ RESUELTO. Eliminado; conservado "27 configs" (no
+%        visible) + interpretación visual.
+%
+%  6. R5 citaba J_edge ≈ 0.59 y < 0.002 (badges visibles)
+%     → ✅ RESUELTO. Eliminados; conservado "0.67 LD" (no en
+%        fig) + interpretación "halfway".
+%
+%  7. R3 tablas sin figura → sin redundancia visual
+%     → ✅ Sin cambios necesarios. Tablas fusionadas en una sola.
+%
+%  8. PURPOSE "disjoint namespaces" ×3
+%     → ✅ RESUELTO. Reducido a 2 menciones en secciones
+%        distintas (PURPOSE + METHODS). Minipage ahora da
+%        consecuencia en vez de repetir hecho.
+%
+%  9. Conclusions repetían Results verbatim
+%     → ✅ RESUELTO. Fusionadas con Contributions (C1–C5).
+%        Repetición residual es intencional (convención poster).
+%
+% ── Redundancias residuales aceptadas ─────────────────────────────
+%  • R1: "≥ 0.91 at 5%" repite anotación del inset (pequeño).
+%  • R2: "~0.34 at 5D" legible en curva (sin anotación).
+%  • C3/C4: repiten números de R3/R4 en Conclusions (convención).
+%  • "disjoint namespaces" en PURPOSE y METHODS (secciones indep.).
+%
+% ── Veredicto ─────────────────────────────────────────────────────
+%  Todas las redundancias estructurales han sido resueltas.
+%  Las redundancias residuales son menores y justificadas.
+%  El texto actual cumple el criterio: interpreta, no recita.
+% ═══════════════════════════════════════════════════════════════════

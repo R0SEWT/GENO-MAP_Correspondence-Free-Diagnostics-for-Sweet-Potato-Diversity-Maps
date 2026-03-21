@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/license-academic_UPC-grey?style=flat-square" alt="License"/>
 </p>
 
-📊 [Poster](docs/poster/poster_a1.pdf) · 📖 [Explainer](docs/explainer-es.md) · 💻 [Pipeline overview](#overview)
+📊 [Poster](docs/poster/poster_a1_v2.pdf) · 📖 [Explainer](docs/explainer-es.md) · 💻 [Pipeline overview](#overview)
 
 > A reproducible pipeline for mapping genomic diversity in sweet potato collections,
 > validating diversity maps **without requiring shared identifiers across panels**.
@@ -45,7 +45,7 @@ Welcome! This repository contains **all code, figures, and the reproducible pipe
 
 | What | Where |
 |------|-------|
-| **View the poster (PDF)** | [`docs/poster/poster_a1.pdf`](docs/poster/poster_a1.pdf) |
+| **View the poster (PDF)** | [`docs/poster/poster_a1_v2.pdf`](docs/poster/poster_a1_v2.pdf) |
 | **Poster figures** | [`docs/figures/poster/`](docs/figures/poster/) |
 | **Robustness experiments** | [`experiments/`](experiments/) |
 | **Notebooks** | [`notebooks/`](notebooks/) |
@@ -71,7 +71,7 @@ The project demonstrates that PCA-30D is the operationally preferable embedding 
 ## Poster
 
 <p align="center">
-  <a href="docs/poster/poster_a1.pdf">
+  <a href="docs/poster/poster_a1_v2.pdf">
     <img src="docs/figures/poster/fig4_robustness_hero.png" width="720" alt="Robustness Hero Figure — click to view full poster PDF"/>
   </a>
 </p>
@@ -177,7 +177,7 @@ python scripts/generate_poster_figures.py --outdir docs/figures/poster
 ### Compile poster
 
 ```bash
-cd docs/poster && lualatex poster_a1.tex
+cd docs/poster && lualatex poster_a1_v2.tex
 ```
 
 Requires `texlive-full` (beamerposter, fontspec, tcolorbox, tikz, orcidlink).
@@ -193,7 +193,7 @@ Requires `texlive-full` (beamerposter, fontspec, tcolorbox, tikz, orcidlink).
 ## Documentation
 
 - **ADRs** ([`docs/addr/`](docs/addr/)): architectural decisions from data download through stability frontier analysis (0001–0008)
-- **Poster** ([`docs/poster/poster_a1.pdf`](docs/poster/poster_a1.pdf)): camera-ready A1 beamerposter (LuaLaTeX)
+- **Poster** ([`docs/poster/poster_a1_v2.pdf`](docs/poster/poster_a1_v2.pdf)): camera-ready A1 beamerposter (LuaLaTeX)
 - **Figures** ([`docs/figures/poster/`](docs/figures/poster/)): all figures in Okabe-Ito palette, 300 DPI
 
 ## Citation

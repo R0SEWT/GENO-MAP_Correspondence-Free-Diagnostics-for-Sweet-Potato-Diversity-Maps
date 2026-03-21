@@ -1,0 +1,36 @@
+{
+  "global_snp": {
+    "label": "Global SNP",
+    "n": 5970,
+    "p": 20069,
+    "layouts": [
+      {
+        "name": "baseline",
+        "n_neighbors": 15,
+        "min_dist": 0.3,
+        "seed": 42,
+        "J_edge_pca_vs_umap": 0.5038,
+        "J_nbr_pca_vs_umap": 0.5343,
+        "J_edge_pca_invariance": 1.0
+      },
+      {
+        "name": "local_stress",
+        "n_neighbors": 10,
+        "min_dist": 0.1,
+        "seed": 52,
+        "J_edge_pca_vs_umap": 0.4863,
+        "J_nbr_pca_vs_umap": 0.5157,
+        "J_edge_pca_invariance": 1.0
+      },
+      {
+        "name": "global_stress",
+        "n_neighbors": 30,
+        "min_dist": 0.5,
+        "seed": 62,
+        "J_edge_pca_vs_umap": 0.4687,
+        "J_nbr_pca_vs_umap": 0.5027,
+        "J_edge_pca_invariance": 1.0
+      }
+    ]
+  }
+}
