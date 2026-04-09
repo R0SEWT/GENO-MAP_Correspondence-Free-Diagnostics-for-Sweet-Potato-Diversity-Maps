@@ -27,16 +27,26 @@
 
 ## Why this project exists
 
+
+<p align="center">
+  <a href="docs/poster/poster_a1_v2.pdf">
+    <img src="docs/figures/hero.png" width="720" alt="Research question and problem statement — click to view full poster PDF"/>
+  </a>
+</p>
+
+<p align="center">
+  <em>Research question — disjoint ID namespaces across panels. Click to view the full A1 poster.</em>
+</p>
+
+
 Modern crop genotyping datasets contain tens of thousands of markers
 for each plant. Visualizing the genetic diversity of these collections
 is essential for plant breeders and germplasm curators.
 
 However, in practice many genotyping panels use **different identifier
-systems**, making it impossible to align datasets directly.
+systems**, making it impossible to align datasets directly. 
 
-GENO-MAP proposes a different approach:
-
-**validate diversity maps without requiring shared identifiers.**
+GENO-MAP proposes a different approach: **validate diversity maps without requiring shared identifiers.**
 
 
 ## 📌 Scanned the QR at the conference?
@@ -68,17 +78,6 @@ The project demonstrates that PCA-30D is the operationally preferable embedding 
 | **Correspondence-free QA** | Geometry diagnostics + robustness curves work without shared IDs |
 | **AE not justified**       | In *n/p* < 0.3 regimes, stability dominates marginal trust gains |
 
-## Poster
-
-<p align="center">
-  <a href="docs/poster/poster_a1_v2.pdf">
-    <img src="docs/figures/hero.png" width="720" alt="Research question and problem statement — click to view full poster PDF"/>
-  </a>
-</p>
-
-<p align="center">
-  <em>Research question — disjoint ID namespaces across panels. Click to view the full A1 poster.</em>
-</p>
 
 ## Datasets
 
