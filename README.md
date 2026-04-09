@@ -43,13 +43,13 @@ GENO-MAP proposes a different approach:
 
 Welcome! This repository contains **all code, figures, and the reproducible pipeline** behind our poster. Here's the fast track:
 
-| What | Where |
-|------|-------|
-| **View the poster (PDF)** | [`docs/poster/poster_a1_v2.pdf`](docs/poster/poster_a1_v2.pdf) |
-| **Poster figures** | [`docs/figures/poster/`](docs/figures/poster/) |
-| **Robustness experiments** | [`experiments/`](experiments/) |
-| **Notebooks** | [`notebooks/`](notebooks/) |
-| **Architecture decisions** | [`docs/addr/`](docs/addr/) |
+| What                       | Where                                                          |
+| -------------------------- | -------------------------------------------------------------- |
+| **View the poster (PDF)**  | [`docs/poster/poster_a1_v2.pdf`](docs/poster/poster_a1_v2.pdf) |
+| **Poster figures**         | [`docs/figures/poster/`](docs/figures/poster/)                 |
+| **Robustness experiments** | [`experiments/`](experiments/)                                 |
+| **Notebooks**              | [`notebooks/`](notebooks/)                                     |
+| **Architecture decisions** | [`docs/addr/`](docs/addr/)                                     |
 
 ---
 
@@ -61,35 +61,35 @@ The project demonstrates that PCA-30D is the operationally preferable embedding 
 
 ### Key findings
 
-| Result | Detail |
-|--------|--------|
-| **Subspace invariance** | PCA-30D subspace similarity SS ≥ 0.91 under 95% marker dropout |
-| **Topological continuity** | kNN Jaccard degrades monotonically — no cliff effects |
+| Result                     | Detail                                                           |
+| -------------------------- | ---------------------------------------------------------------- |
+| **Subspace invariance**    | PCA-30D subspace similarity SS ≥ 0.91 under 95% marker dropout   |
+| **Topological continuity** | kNN Jaccard degrades monotonically — no cliff effects            |
 | **Correspondence-free QA** | Geometry diagnostics + robustness curves work without shared IDs |
-| **AE not justified** | In *n/p* < 0.3 regimes, stability dominates marginal trust gains |
+| **AE not justified**       | In *n/p* < 0.3 regimes, stability dominates marginal trust gains |
 
 ## Poster
 
 <p align="center">
   <a href="docs/poster/poster_a1_v2.pdf">
-    <img src="docs/figures/poster/fig4_robustness_hero.png" width="720" alt="Robustness Hero Figure — click to view full poster PDF"/>
+    <img src="docs/figures/hero.png" width="720" alt="Research question and problem statement — click to view full poster PDF"/>
   </a>
 </p>
 
 <p align="center">
-  <em>Robustness under perturbation (marker subsampling & MCAR injection). Click to view the full A1 poster.</em>
+  <em>Research question — disjoint ID namespaces across panels. Click to view the full A1 poster.</em>
 </p>
 
 ## Datasets
 
 Four disjoint DArT panels from CIP Dataverse (not version-controlled):
 
-| Panel | *n* | *p* | *n/p* | Source |
-|-------|-----|-----|-------|--------|
-| Global SNP | 5 970 | 20 069 | 0.30 | [`doi:10.21223/P3/S2IMOS`](https://doi.org/10.21223/P3/S2IMOS) |
-| Global SilicoDArT | 5 970 | 57 715 | 0.10 | [`doi:10.21223/P3/S2IMOS`](https://doi.org/10.21223/P3/S2IMOS) |
-| LowDensity SNP | 630 | 62 732 | 0.01 | [`doi:10.21223/P3/UBDJ44`](https://doi.org/10.21223/P3/UBDJ44) |
-| LowDensity SilicoDArT | 635 | 38 272 | 0.02 | [`doi:10.21223/P3/UBDJ44`](https://doi.org/10.21223/P3/UBDJ44) |
+| Panel                 | *n*   | *p*    | *n/p* | Source                                                         |
+| --------------------- | ----- | ------ | ----- | -------------------------------------------------------------- |
+| Global SNP            | 5 970 | 20 069 | 0.30  | [`doi:10.21223/P3/S2IMOS`](https://doi.org/10.21223/P3/S2IMOS) |
+| Global SilicoDArT     | 5 970 | 57 715 | 0.10  | [`doi:10.21223/P3/S2IMOS`](https://doi.org/10.21223/P3/S2IMOS) |
+| LowDensity SNP        | 630   | 62 732 | 0.01  | [`doi:10.21223/P3/UBDJ44`](https://doi.org/10.21223/P3/UBDJ44) |
+| LowDensity SilicoDArT | 635   | 38 272 | 0.02  | [`doi:10.21223/P3/UBDJ44`](https://doi.org/10.21223/P3/UBDJ44) |
 
 Place data under `data/` (listed in `.gitignore`). See [`data/metadata.json`](data/metadata.json) for DOIs and references.
 
@@ -184,11 +184,11 @@ Requires `texlive-full` (beamerposter, fontspec, tcolorbox, tikz, orcidlink).
 
 ## Outputs
 
-| File | Description |
-|------|-------------|
+| File           | Description                                                              |
+| -------------- | ------------------------------------------------------------------------ |
 | `*_nodes.json` | Node list with `id`, `embedding: [x, y]`, `meta` — for 2-D scatter plots |
-| `*_edges.json` | kNN edges (`source`, `target`, `distance`) — for graph layouts |
-| `*_stats.json` | Summary: samples, markers, missing_rate, metric, neighbors |
+| `*_edges.json` | kNN edges (`source`, `target`, `distance`) — for graph layouts           |
+| `*_stats.json` | Summary: samples, markers, missing_rate, metric, neighbors               |
 
 ## Documentation
 
